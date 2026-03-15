@@ -157,6 +157,25 @@ symfony server:start --no-tls --port=8000
 - Accede a `http://localhost:8000` para ver si el backend responde.
 - Para detenerlo: `symfony server:stop` o `Ctrl+C` en la terminal.
 
+### 6.1 Carga datos demo (seeder)
+
+Con la base de datos y el backend en marcha, puedes cargar datos iniciales para probar rapido el tablero:
+
+```bash
+cd symfony-backend
+php bin/console app:seed:demo
+```
+
+El seeder es idempotente: puedes ejecutarlo varias veces sin duplicar el proyecto principal.
+
+Si quieres limpiar esos datos demo y dejarlos desde cero:
+
+```bash
+cd symfony-backend
+php bin/console app:seed:reset
+php bin/console app:seed:demo
+```
+
 ---
 
 ### 7. Arranca el frontend en local
