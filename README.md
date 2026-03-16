@@ -7,17 +7,17 @@ Una aplicación web completa de gestión de tareas con login y panel de administ
 ## Stack Tecnológico
 
 **Frontend:**
-- Angular 19
-- Tailwind CSS
-- TypeScript
+- Angular 21
+- Tailwind CSS 4
+- TypeScript 5
 
 **Backend:**
-- Symfony 6
-- PHP 8
+- Symfony 7
+- PHP 8.3
 - JWT (autenticación)
 
 **Base de Datos:**
-- PostgreSQL
+- PostgreSQL 17
 
 **Containerización:**
 - Docker & Docker Compose
