@@ -9,3 +9,9 @@
 
 controllers:
     resource: routing.controllers
+
+# This route is intercepted by the security firewall (json_login).
+# It must be registered so the router doesn't return 404 before the firewall runs.
+api_login:
+    path: /api/login
+    methods: [POST]

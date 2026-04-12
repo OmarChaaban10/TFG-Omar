@@ -13,7 +13,7 @@
       <p class="mt-1 text-center text-sm text-slate-400">Inicia sesión en tu espacio de trabajo</p>
 
       <!-- Form -->
-      <form class="mt-7 space-y-4" novalidate>
+      <form class="mt-7 space-y-4" (submit)="login(); $event.preventDefault();" novalidate>
 
         <div class="flex flex-col gap-1.5">
           <label for="email" class="text-xs font-semibold tracking-wide text-slate-300">Correo electrónico</label>
@@ -21,8 +21,10 @@
             id="email"
             name="email"
             type="email"
-            placeholder="omar@taskhive.app"
+            placeholder="user@taskhive.app"
             class="w-full rounded-xl border border-orange-500/80 bg-slate-800/90 px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-orange-400 focus:ring-2 focus:ring-orange-500/30"
+            (input)="email = $any($event.target).value"
+            [value]="email"
           />
         </div>
 
@@ -34,29 +36,43 @@
             type="password"
             placeholder="********"
             class="w-full rounded-xl border border-slate-700 bg-slate-800/90 px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-orange-400 focus:ring-2 focus:ring-orange-500/30"
+            (input)="password = $any($event.target).value"
+            [value]="password"
           />
         </div>
 
         <div class="flex items-center justify-between gap-3 text-xs">
           <label class="flex cursor-pointer items-center gap-2 text-slate-400">
-            <input type="checkbox" class="h-4 w-4 accent-orange-500" />
+            <input
+              type="checkbox"
+              class="h-4 w-4 accent-orange-500"
+              (change)="rememberMe = $any($event.target).checked"
+              [checked]="rememberMe"
+            />
             Recordarme
           </label>
-          <a href="#" class="font-semibold text-orange-400 transition-colors hover:text-orange-300">
+          <a routerLink="/forgot-password" class="font-semibold text-orange-400 transition-colors hover:text-orange-300">
             ¿Olvidaste tu contraseña?
           </a>
         </div>
 
+        <div *ngIf="errorMessage" class="rounded-2xl border border-red-500/60 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {{ errorMessage }}
+        </div>
+
         <button
           type="submit"
-          class="w-full cursor-pointer rounded-xl bg-linear-to-r from-orange-500 to-amber-500 px-4 py-3 text-sm font-bold text-slate-950 transition hover:brightness-110"
+          [disabled]="isSubmitting"
+          class="w-full cursor-pointer rounded-xl bg-linear-to-r from-orange-500 to-amber-500 px-4 py-3 text-sm font-bold text-slate-950 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70 flex items-center justify-center gap-2"
         >
-          Iniciar sesión
+          <span *ngIf="isSubmitting" class="animate-spin rounded-full h-4 w-4 border-2 border-slate-950 border-t-transparent"></span>
+          <span *ngIf="isSubmitting">Iniciando sesión...</span>
+          <span *ngIf="!isSubmitting">Iniciar sesión</span>
         </button>
 
       </form>
 
-      <!-- Divider -->
+      <!-- Division -->
       <div class="my-5 flex items-center gap-3 text-xs text-slate-500">
         <span class="h-px flex-1 bg-slate-700"></span>
         o
@@ -65,7 +81,7 @@
 
       <p class="text-center text-sm text-slate-400">
         ¿No tienes cuenta?
-        <a href="#" class="ml-1 font-semibold text-orange-400 transition-colors hover:text-orange-300">Crear cuenta -&gt;</a>
+        <a routerLink="/register" class="ml-1 font-semibold text-orange-400 transition-colors hover:text-orange-300">Crear cuenta -></a>
       </p>
 
     </section>

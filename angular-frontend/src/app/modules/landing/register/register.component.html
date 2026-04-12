@@ -1,0 +1,126 @@
+<div class="login-scene min-h-screen text-slate-100">
+
+  <main class="mx-auto flex max-w-6xl items-center justify-center px-4 py-10 sm:px-6" style="min-height: calc(100vh - 86px)">
+    <section class="w-full max-w-md rounded-3xl border border-slate-700/80 bg-slate-900/70 p-6 backdrop-blur-sm sm:p-8" style="box-shadow: 0 20px 80px -35px rgba(249,115,22,0.45)">
+
+      <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-amber-500 to-orange-600 text-lg font-bold text-white" style="box-shadow: 0 10px 24px rgba(234,88,12,0.4)">
+        TH
+      </div>
+
+      <h1 class="mt-5 text-center text-3xl font-bold tracking-tight text-slate-100">Crear cuenta</h1>
+      <p class="mt-1 text-center text-sm text-slate-400">Regístrate para comenzar a usar TaskHive.</p>
+
+      <form class="mt-7 space-y-4" (submit)="register(); $event.preventDefault();" novalidate>
+
+        <!-- Avatar Upload -->
+        <div class="flex flex-col items-center justify-center gap-2 pb-2">
+          <div class="relative group cursor-pointer" (click)="fileInput.click()">
+            <div class="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-slate-700 bg-slate-800/80 transition-all group-hover:border-orange-500/80">
+              <img *ngIf="avatarPreview" [src]="avatarPreview" alt="Avatar Preview" class="h-full w-full object-cover">
+              <svg *ngIf="!avatarPreview" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-500 transition-colors group-hover:text-orange-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            
+            <div class="absolute bottom-0 right-0 rounded-full border-2 border-slate-900 bg-orange-500 p-1.5 text-white transition-transform group-hover:scale-110">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+              </svg>
+            </div>
+          </div>
+          
+          <input
+            #fileInput
+            type="file"
+            accept="image/png, image/jpeg, image/jpg, image/webp"
+            class="hidden"
+            (change)="onFileSelected($event)"
+          />
+          <span class="text-xs text-slate-400">Foto de perfil (opcional)</span>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label for="name" class="text-xs font-semibold tracking-wide text-slate-300">Nombre completo</label>
+          <input
+            id="name"
+            name="name"
+            type="text"
+            placeholder="Tu nombre"
+            class="w-full rounded-xl border border-slate-700 bg-slate-800/90 px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-orange-400 focus:ring-2 focus:ring-orange-500/30"
+            (input)="name = $any($event.target).value"
+            [value]="name"
+          />
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label for="email" class="text-xs font-semibold tracking-wide text-slate-300">Correo electrónico</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="user@taskhive.app"
+            class="w-full rounded-xl border border-orange-500/80 bg-slate-800/90 px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-orange-400 focus:ring-2 focus:ring-orange-500/30"
+            (input)="email = $any($event.target).value; emailErrorMessage = ''"
+            (blur)="checkEmail()"
+            [value]="email"
+          />
+          <div *ngIf="emailErrorMessage" class="text-xs text-red-400 mt-1">
+            {{ emailErrorMessage }}
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label for="password" class="text-xs font-semibold tracking-wide text-slate-300">Contraseña</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            placeholder="********"
+            class="w-full rounded-xl border border-slate-700 bg-slate-800/90 px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-orange-400 focus:ring-2 focus:ring-orange-500/30"
+            (input)="password = $any($event.target).value"
+            [value]="password"
+          />
+        </div>
+
+        <div class="flex flex-col gap-1.5">
+          <label for="confirmPassword" class="text-xs font-semibold tracking-wide text-slate-300">Confirmar contraseña</label>
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            placeholder="********"
+            class="w-full rounded-xl border border-slate-700 bg-slate-800/90 px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-orange-400 focus:ring-2 focus:ring-orange-500/30"
+            (input)="confirmPassword = $any($event.target).value"
+            [value]="confirmPassword"
+          />
+        </div>
+
+        <div *ngIf="errorMessage" class="rounded-2xl border border-red-500/60 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {{ errorMessage }}
+        </div>
+
+        <div *ngIf="successMessage" class="rounded-2xl border border-emerald-500/60 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+          {{ successMessage }}
+        </div>
+
+        <button
+          type="submit"
+          [disabled]="isSubmitting || isCheckingEmail || emailErrorMessage !== ''"
+          class="w-full cursor-pointer rounded-xl bg-linear-to-r from-orange-500 to-amber-500 px-4 py-3 text-sm font-bold text-slate-950 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70 flex items-center justify-center gap-2"
+        >
+          <span *ngIf="isSubmitting || isCheckingEmail" class="animate-spin rounded-full h-4 w-4 border-2 border-slate-950 border-t-transparent"></span>
+          <span *ngIf="isSubmitting">Creando cuenta...</span>
+          <span *ngIf="!isSubmitting && isCheckingEmail">Verificando...</span>
+          <span *ngIf="!isSubmitting && !isCheckingEmail">Crear cuenta</span>
+        </button>
+
+      </form>
+
+      <div class="mt-5 text-center text-sm text-slate-400">
+        <a routerLink="/" class="font-semibold text-orange-400 transition-colors hover:text-orange-300">Volver al inicio</a>
+      </div>
+
+    </section>
+  </main>
+
+</div>
