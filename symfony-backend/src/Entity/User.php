@@ -36,6 +36,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(name: 'avatar_url', type: 'text', nullable: true)]
     private ?string $avatarUrl = null;
 
+    #[ORM\Column(name: 'reset_token', length: 255, nullable: true)]
+    private ?string $resetToken = null;
+
     #[ORM\Column(name: 'created_at', type: 'datetime_immutable')]
     private \DateTimeImmutable $createdAt;
 
@@ -143,6 +146,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setAvatarUrl(?string $avatarUrl): self
     {
         $this->avatarUrl = $avatarUrl;
+
+        return $this;
+    }
+
+    public function getResetToken(): ?string
+    {
+        return $this->resetToken;
+    }
+
+    public function setResetToken(?string $resetToken): self
+    {
+        $this->resetToken = $resetToken;
 
         return $this;
     }
