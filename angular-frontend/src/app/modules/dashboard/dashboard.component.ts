@@ -2,7 +2,6 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { finalize } from 'rxjs/operators';
-
 @Component({
   selector: 'app-dashboard',
   standalone: true,
