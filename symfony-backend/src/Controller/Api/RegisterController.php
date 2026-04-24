@@ -36,10 +36,6 @@ final class RegisterController
         $name = trim((string) ($data['name'] ?? ''));
         $email = trim((string) ($data['email'] ?? ''));
         $password = (string) ($data['password'] ?? '');
-        $symbols = ['.', ',', ';', ':', '!', '?', '-', '_', '@', '#', '$', '%', '^', '&', '*', '(', ')', '+', '=', '{', '}', '[', ']', '|', '\\', '/', '"', "'", '<', '>'];
-        $symbolFound = false;
-        $uppercaseFound = false;
-
         if ($name === '' || $email === '' || $password === '') {
             return new JsonResponse(['message' => 'Todos los campos son obligatorios.'], Response::HTTP_BAD_REQUEST);
         }
@@ -48,28 +44,19 @@ final class RegisterController
             return new JsonResponse(['message' => 'El correo electrónico no es válido.'], Response::HTTP_BAD_REQUEST);
         }
 
+        if (mb_strlen($email) > 50) {
+            return new JsonResponse(['message' => 'El correo electrónico no puede tener más de 50 caracteres.'], Response::HTTP_BAD_REQUEST);
+        }
+
         if (mb_strlen($password) < 8) {
             return new JsonResponse(['message' => 'La contraseña debe tener al menos 8 caracteres.'], Response::HTTP_BAD_REQUEST);
         }
 
-        if (mb_strlen($email) > 25) {
-            return new JsonResponse(['message' => 'El correo electrónico no puede tener más de 25 caracteres.'], Response::HTTP_BAD_REQUEST);
+        if (preg_match('/\s/', $password)) {
+            return new JsonResponse(['message' => 'La contraseña no puede contener espacios.'], Response::HTTP_BAD_REQUEST);
         }
 
-        foreach (str_split($password) as $char) {
-            if (ctype_space($char)) {
-                return new JsonResponse(['message' => 'La contraseña no puede contener espacios.'], Response::HTTP_BAD_REQUEST);
-            }
-        }
-
-        foreach (str_split($password) as $char) {
-            if (in_array($char, $symbols, true)) {
-                $symbolFound = true;
-                break;
-            }
-        }
-
-        if (!$symbolFound) {
+        if (!preg_match('/[^a-zA-Z0-9\s]/', $password)) {
             return new JsonResponse(['message' => 'La contraseña debe contener al menos un carácter especial.'], Response::HTTP_BAD_REQUEST);
         }
 

@@ -16,19 +16,22 @@
         <div class="flex flex-col items-center justify-center gap-2 pb-2">
           <div class="relative group cursor-pointer" (click)="fileInput.click()">
             <div class="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-slate-700 bg-slate-800/80 transition-all group-hover:border-orange-500/80">
-              <img *ngIf="avatarPreview" [src]="avatarPreview" alt="Avatar Preview" class="h-full w-full object-cover">
-              <svg *ngIf="!avatarPreview" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-500 transition-colors group-hover:text-orange-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-              </svg>
+              @if (avatarPreview) {
+                <img [src]="avatarPreview" alt="Avatar Preview" class="h-full w-full object-cover">
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-500 transition-colors group-hover:text-orange-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                </svg>
+              }
             </div>
-            
+
             <div class="absolute bottom-0 right-0 rounded-full border-2 border-slate-900 bg-orange-500 p-1.5 text-white transition-transform group-hover:scale-110">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
               </svg>
             </div>
           </div>
-          
+
           <input
             #fileInput
             type="file"
@@ -42,12 +45,13 @@
         <div class="flex flex-col gap-1.5">
           <label for="name" class="text-xs font-semibold tracking-wide text-slate-300">Nombre completo</label>
           <input
+            #nameInput
             id="name"
             name="name"
             type="text"
             placeholder="Tu nombre"
             class="w-full rounded-xl border border-slate-700 bg-slate-800/90 px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-orange-400 focus:ring-2 focus:ring-orange-500/30"
-            (input)="name = $any($event.target).value"
+            (input)="name = nameInput.value"
             [value]="name"
           />
         </div>
@@ -55,29 +59,33 @@
         <div class="flex flex-col gap-1.5">
           <label for="email" class="text-xs font-semibold tracking-wide text-slate-300">Correo electrónico</label>
           <input
+            #emailInput
             id="email"
             name="email"
             type="email"
             placeholder="user@taskhive.app"
             class="w-full rounded-xl border border-orange-500/80 bg-slate-800/90 px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-orange-400 focus:ring-2 focus:ring-orange-500/30"
-            (input)="email = $any($event.target).value; emailErrorMessage = ''"
+            (input)="email = emailInput.value; emailErrorMessage = ''"
             (blur)="checkEmail()"
             [value]="email"
           />
-          <div *ngIf="emailErrorMessage" class="text-xs text-red-400 mt-1">
-            {{ emailErrorMessage }}
-          </div>
+          @if (emailErrorMessage) {
+            <div class="text-xs text-red-400 mt-1">
+              {{ emailErrorMessage }}
+            </div>
+          }
         </div>
 
         <div class="flex flex-col gap-1.5">
           <label for="password" class="text-xs font-semibold tracking-wide text-slate-300">Contraseña</label>
           <input
+            #passwordInput
             id="password"
             name="password"
             type="password"
             placeholder="********"
             class="w-full rounded-xl border border-slate-700 bg-slate-800/90 px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-orange-400 focus:ring-2 focus:ring-orange-500/30"
-            (input)="password = $any($event.target).value"
+            (input)="password = passwordInput.value"
             [value]="password"
           />
         </div>
@@ -85,33 +93,44 @@
         <div class="flex flex-col gap-1.5">
           <label for="confirmPassword" class="text-xs font-semibold tracking-wide text-slate-300">Confirmar contraseña</label>
           <input
+            #confirmPasswordInput
             id="confirmPassword"
             name="confirmPassword"
             type="password"
             placeholder="********"
             class="w-full rounded-xl border border-slate-700 bg-slate-800/90 px-4 py-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-orange-400 focus:ring-2 focus:ring-orange-500/30"
-            (input)="confirmPassword = $any($event.target).value"
+            (input)="confirmPassword = confirmPasswordInput.value"
             [value]="confirmPassword"
           />
         </div>
 
-        <div *ngIf="errorMessage" class="rounded-2xl border border-red-500/60 bg-red-500/10 px-4 py-3 text-sm text-red-200">
-          {{ errorMessage }}
-        </div>
+        @if (errorMessage) {
+          <div class="rounded-2xl border border-red-500/60 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {{ errorMessage }}
+          </div>
+        }
 
-        <div *ngIf="successMessage" class="rounded-2xl border border-emerald-500/60 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
-          {{ successMessage }}
-        </div>
+        @if (successMessage) {
+          <div class="rounded-2xl border border-emerald-500/60 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+            {{ successMessage }}
+          </div>
+        }
 
         <button
           type="submit"
           [disabled]="isSubmitting || isCheckingEmail || emailErrorMessage !== ''"
           class="w-full cursor-pointer rounded-xl bg-linear-to-r from-orange-500 to-amber-500 px-4 py-3 text-sm font-bold text-slate-950 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70 flex items-center justify-center gap-2"
         >
-          <span *ngIf="isSubmitting || isCheckingEmail" class="animate-spin rounded-full h-4 w-4 border-2 border-slate-950 border-t-transparent"></span>
-          <span *ngIf="isSubmitting">Creando cuenta...</span>
-          <span *ngIf="!isSubmitting && isCheckingEmail">Verificando...</span>
-          <span *ngIf="!isSubmitting && !isCheckingEmail">Crear cuenta</span>
+          @if (isSubmitting || isCheckingEmail) {
+            <span class="animate-spin rounded-full h-4 w-4 border-2 border-slate-950 border-t-transparent"></span>
+          }
+          @if (isSubmitting) {
+            <span>Creando cuenta...</span>
+          } @else if (isCheckingEmail) {
+            <span>Verificando...</span>
+          } @else {
+            <span>Crear cuenta</span>
+          }
         </button>
 
       </form>

@@ -9,6 +9,8 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'notifications')]
+#[ORM\Index(name: 'idx_notification_user_read', columns: ['user_id', 'read'])]
+#[ORM\Index(name: 'idx_notification_sent_at', columns: ['sent_at'])]
 class Notification
 {
     #[ORM\Id]

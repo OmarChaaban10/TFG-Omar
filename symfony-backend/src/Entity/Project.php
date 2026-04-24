@@ -10,6 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'projects')]
+#[ORM\Index(name: 'idx_project_archived', columns: ['archived'])]
 class Project
 {
     #[ORM\Id]

@@ -11,6 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'cards')]
+#[ORM\Index(name: 'idx_card_assignee_column', columns: ['assignee_id', 'column_id'])]
 class Card
 {
     #[ORM\Id]

@@ -1,14 +1,18 @@
-import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
+import { Component, OnInit, DestroyRef, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { NgIf } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+interface LoginResponse {
+  token: string;
+}
 
 @Component({
   selector: 'app-login',
   standalone: true,
   templateUrl: './login.component.html',
-  imports: [RouterLink, NgIf, ReactiveFormsModule]
+  imports: [RouterLink, ReactiveFormsModule]
 })
 export class LoginComponent implements OnInit {
   loginForm!: FormGroup;
@@ -16,12 +20,10 @@ export class LoginComponent implements OnInit {
   errorMessage = '';
   isSubmitting = false;
 
-  constructor(
-    private readonly fb: FormBuilder,
-    private readonly http: HttpClient,
-    private readonly router: Router,
-    private readonly cdr: ChangeDetectorRef
-  ) {}
+  private readonly fb = inject(FormBuilder);
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   ngOnInit(): void {
     this.loginForm = this.fb.group({
@@ -47,10 +49,11 @@ export class LoginComponent implements OnInit {
 
     this.isSubmitting = true;
     this.http
-      .post<{ token: string }>('/api/login', {
+      .post<LoginResponse>('/api/login', {
         email: email.trim(),
-        password: password
+        password
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
           localStorage.removeItem('jwt_token');
@@ -62,7 +65,6 @@ export class LoginComponent implements OnInit {
             sessionStorage.setItem('jwt_token', response.token);
           }
           this.isSubmitting = false;
-          this.cdr.detectChanges();
           this.router.navigate(['/dashboard']);
         },
         error: (error) => {
@@ -72,7 +74,6 @@ export class LoginComponent implements OnInit {
           }
           this.errorMessage = msg || 'Ha ocurrido un error inesperado al iniciar sesión.';
           this.isSubmitting = false;
-          this.cdr.detectChanges();
         }
       });
   }

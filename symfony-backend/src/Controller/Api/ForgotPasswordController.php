@@ -40,10 +40,13 @@ final class ForgotPasswordController
             return new JsonResponse(['message' => 'El formato del correo no es válido.'], Response::HTTP_BAD_REQUEST);
         }
 
+        // Always return the same response to prevent user enumeration
+        $genericMessage = 'Si existe una cuenta con ese correo, recibirás un enlace para recuperar tu contraseña.';
+
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => mb_strtolower($email)]);
 
         if ($user === null) {
-            return new JsonResponse(['message' => 'No existe ninguna cuenta con ese correo electrónico.'], Response::HTTP_NOT_FOUND);
+            return new JsonResponse(['message' => $genericMessage], Response::HTTP_OK);
         }
 
         // Generate reset token
@@ -63,10 +66,11 @@ final class ForgotPasswordController
 
         try {
             $this->mailer->send($emailMsg);
-        } catch (\Exception $e) {
-            return new JsonResponse(['message' => 'Error al enviar el correo electrónico.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        } catch (\Exception) {
+            // Log error internally but don't reveal to user
+            return new JsonResponse(['message' => $genericMessage], Response::HTTP_OK);
         }
 
-        return new JsonResponse(['message' => 'Se ha enviado un correo con las instrucciones para recuperar tu contraseña.'], Response::HTTP_OK);
+        return new JsonResponse(['message' => $genericMessage], Response::HTTP_OK);
     }
 }

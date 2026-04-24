@@ -8,8 +8,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
           </svg>
         </button>
-        <div class="bg-orange-500 text-white font-bold p-1 rounded text-sm w-7 h-7 flex items-center justify-center">TH
-        </div>
+        <img src="taskhive_logo.png" class="w-10 h-10" alt="TaskHive Logo">
         <span class="font-bold text-lg text-white tracking-wide hidden sm:inline-block">TaskHive</span>
       </div>
 
@@ -28,14 +27,16 @@
       <!-- Avatar: imagen si existe, iniciales si no -->
       <div class="w-9 h-9 rounded-full overflow-hidden ring-2 ring-orange-500/60 flex items-center justify-center"
            [title]="userName">
-        <img *ngIf="avatarUrl"
-             [src]="avatarUrl"
-             [alt]="userName"
-             class="w-full h-full object-cover" />
-        <div *ngIf="!avatarUrl"
-             class="w-full h-full bg-orange-500 flex items-center justify-center text-white font-bold text-sm">
-          {{ userInitials }}
-        </div>
+        @if (avatarUrl) {
+          <img
+            [src]="avatarUrl"
+            [alt]="userName"
+            class="w-full h-full object-cover" />
+        } @else {
+          <div class="w-full h-full bg-orange-500 flex items-center justify-center text-white font-bold text-sm">
+            {{ userInitials }}
+          </div>
+        }
       </div>
     </div>
   </nav>
@@ -72,19 +73,20 @@
     <main class="flex-1 p-8 overflow-y-auto bg-[#0b1120]">
 
       <!-- Error Banner -->
-      <div *ngIf="error && !isLoading"
-        class="mb-6 flex items-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg px-4 py-3">
-        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-        <span>{{ error }}</span>
-        <button (click)="fetchDashboardData()"
-          class="ml-auto text-xs underline hover:text-red-300 transition">Reintentar</button>
-      </div>
+      @if (error && !isLoading) {
+        <div class="mb-6 flex items-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg px-4 py-3">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <span>{{ error }}</span>
+          <button (click)="fetchDashboardData()"
+            class="ml-auto text-xs underline hover:text-red-300 transition">Reintentar</button>
+        </div>
+      }
 
       <!-- LOADING SKELETON -->
-      <ng-container *ngIf="isLoading">
+      @if (isLoading) {
         <!-- Greeting skeleton -->
         <div class="mb-8 animate-pulse">
           <div class="h-7 w-64 bg-slate-700/60 rounded mb-3"></div>
@@ -93,46 +95,49 @@
 
         <!-- Stats skeleton -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div *ngFor="let i of [1,2,3,4]"
-            class="bg-[#12192e] rounded-lg p-5 border-t-4 border-slate-700 animate-pulse">
-            <div class="h-10 w-16 bg-slate-700/60 rounded mb-3"></div>
-            <div class="h-3 w-28 bg-slate-800/60 rounded"></div>
-          </div>
+          @for (i of [1,2,3,4]; track i) {
+            <div class="bg-[#12192e] rounded-lg p-5 border-t-4 border-slate-700 animate-pulse">
+              <div class="h-10 w-16 bg-slate-700/60 rounded mb-3"></div>
+              <div class="h-3 w-28 bg-slate-800/60 rounded"></div>
+            </div>
+          }
         </div>
 
         <!-- Projects skeleton -->
         <div class="mb-8">
           <div class="h-4 w-36 bg-slate-700/60 rounded mb-4 animate-pulse"></div>
           <div class="space-y-3">
-            <div *ngFor="let i of [1,2,3]"
-              class="bg-[#12192e] border border-slate-700/50 rounded-lg p-4 h-16 animate-pulse">
-            </div>
+            @for (i of [1,2,3]; track i) {
+              <div class="bg-[#12192e] border border-slate-700/50 rounded-lg p-4 h-16 animate-pulse">
+              </div>
+            }
           </div>
         </div>
-      </ng-container>
+      }
 
       <!-- LOADED DATA -->
-      <ng-container *ngIf="!isLoading && !error">
+      @if (!isLoading && !error) {
         <!-- Greeting -->
         <div class="mb-8">
           <h2 class="text-2xl font-bold text-white tracking-wide font-ui">Buenos días, {{ userName }}</h2>
           <p class="text-slate-400 mt-1">
-            <ng-container *ngIf="pendingTasks > 0">
+            @if (pendingTasks > 0) {
               Tienes <span class="text-orange-400 font-semibold">{{ pendingTasks }}</span> tareas pendientes para hoy
-            </ng-container>
-            <ng-container *ngIf="pendingTasks === 0">
+            } @else {
               No tienes tareas pendientes hoy 🎉
-            </ng-container>
+            }
           </p>
         </div>
 
         <!-- Stats Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div *ngFor="let stat of stats" class="bg-[#12192e] rounded-lg p-5 flex flex-col justify-between border-t-4"
-            [ngClass]="stat.borderClass">
-            <div class="text-4xl font-bold font-ui mb-2" [ngClass]="stat.color">{{ stat.value }}</div>
-            <div class="text-slate-400 text-sm font-medium">{{ stat.label }}</div>
-          </div>
+          @for (stat of stats; track stat.label; let i = $index) {
+            <div class="bg-[#12192e] rounded-lg p-5 flex flex-col justify-between border-t-4"
+              [ngClass]="getStatBorderClass(i)">
+              <div class="text-4xl font-bold font-ui mb-2" [ngClass]="getStatColor(i)">{{ stat.value }}</div>
+              <div class="text-slate-400 text-sm font-medium">{{ stat.label }}</div>
+            </div>
+          }
         </div>
 
         <!-- Recent Projects -->
@@ -140,45 +145,48 @@
           <h3 class="text-sm font-bold text-white tracking-wider mb-4 font-ui">Proyectos recientes</h3>
 
           <!-- Empty state -->
-          <div *ngIf="recentProjects.length === 0"
-            class="bg-[#12192e] border border-dashed border-slate-700 rounded-lg p-8 text-center">
-            <svg class="w-10 h-10 mx-auto text-slate-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                d="M3 7a2 2 0 012-2h3l2 2h7a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
-            </svg>
-            <p class="text-slate-500 text-sm">Aún no tienes proyectos.</p>
-            <p class="text-slate-600 text-xs mt-1">Crea uno desde las acciones rápidas.</p>
-          </div>
+          @if (recentProjects.length === 0) {
+            <div class="bg-[#12192e] border border-dashed border-slate-700 rounded-lg p-8 text-center">
+              <svg class="w-10 h-10 mx-auto text-slate-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M3 7a2 2 0 012-2h3l2 2h7a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+              </svg>
+              <p class="text-slate-500 text-sm">Aún no tienes proyectos.</p>
+              <p class="text-slate-600 text-xs mt-1">Crea uno desde las acciones rápidas.</p>
+            </div>
+          }
 
           <div class="space-y-3">
             <!-- Item -->
-            <div *ngFor="let project of recentProjects"
-              class="bg-[#12192e] border border-slate-700 rounded-lg p-4 flex flex-col md:flex-row items-start md:items-center justify-between shadow-lg gap-4 md:gap-0">
+            @for (project of recentProjects; track project.id) {
+              <div
+                class="bg-[#12192e] border border-slate-700 rounded-lg p-4 flex flex-col md:flex-row items-start md:items-center justify-between shadow-lg gap-4 md:gap-0">
 
-              <div class="flex flex-col sm:flex-row items-start sm:items-center flex-1 md:pr-6 gap-3 sm:gap-6 w-full">
-                <div class="sm:w-56 shrink-0">
-                  <span class="text-slate-200 font-medium font-ui">{{ project.name }}</span>
-                </div>
-                <span class="text-xs px-2.5 py-1 rounded font-medium" [ngClass]="project.roleClass">
-                  {{ project.role }}
-                </span>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center flex-1 md:pr-6 gap-3 sm:gap-6 w-full">
+                  <div class="sm:w-56 shrink-0">
+                    <span class="text-slate-200 font-medium font-ui">{{ project.name }}</span>
+                  </div>
+                  <span class="text-xs px-2.5 py-1 rounded font-medium" [ngClass]="getRoleClass(project.role)">
+                    {{ project.role }}
+                  </span>
 
-                <div class="w-full sm:flex-1 mt-2 sm:mt-0">
-                  <div class="w-full bg-slate-800 rounded-full h-1.5">
-                    <div class="h-1.5 rounded-full" [ngClass]="project.progressClass" [style.width.%]="project.progress">
+                  <div class="w-full sm:flex-1 mt-2 sm:mt-0">
+                    <div class="w-full bg-slate-800 rounded-full h-1.5">
+                      <div class="h-1.5 rounded-full" [ngClass]="getProgressClass(project.progress)" [style.width.%]="project.progress">
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div class="flex items-center justify-end w-full md:w-auto gap-4 md:gap-6 mt-3 md:mt-0">
-                <span class="text-sm font-bold" [ngClass]="project.textProgressClass">{{ project.progress }}%</span>
-                <button
-                  class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded text-sm font-medium transition flex items-center gap-2 shadow-lg shadow-orange-500/20">
-                  Abrir <span>&rarr;</span>
-                </button>
+                <div class="flex items-center justify-end w-full md:w-auto gap-4 md:gap-6 mt-3 md:mt-0">
+                  <span class="text-sm font-bold" [ngClass]="getTextProgressClass(project.progress)">{{ project.progress }}%</span>
+                  <button
+                    class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded text-sm font-medium transition flex items-center gap-2 shadow-lg shadow-orange-500/20">
+                    Abrir <span>&rarr;</span>
+                  </button>
+                </div>
               </div>
-            </div>
+            }
           </div>
         </div>
 
@@ -200,12 +208,12 @@
             </button>
           </div>
         </div>
-      </ng-container>
+      }
 
     </main>
   </div>
 
   <footer class="border-t border-slate-800 text-xs text-slate-500 p-4 bg-[#090e1a]">
-    TaskHive &copy; 2026 · Dashboard
+    TaskHive &copy; 2026
   </footer>
 </div>
