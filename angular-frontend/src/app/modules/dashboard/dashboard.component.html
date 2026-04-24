@@ -41,9 +41,9 @@
     </div>
   </nav>
 
-  <!-- Main Body -->
+  <!-- Cuerpo principal -->
   <div class="flex flex-col md:flex-row min-h-[calc(100vh-125px)]">
-    <!-- Left Sidebar -->
+    <!-- Barra lateral -->
     <aside class="hidden md:flex w-64 border-r border-slate-800 flex-col py-6 px-4 bg-[#090e1a]">
       <nav class="flex-1 space-y-2">
         <a href="#" class="flex items-center px-4 py-2.5 bg-orange-500 text-white rounded-md font-medium text-sm">
@@ -69,10 +69,10 @@
       </nav>
     </aside>
 
-    <!-- Main Content -->
+    <!-- Contenido principal -->
     <main class="flex-1 p-8 overflow-y-auto bg-[#0b1120]">
 
-      <!-- Error Banner -->
+      <!-- Banner de error -->
       @if (error && !isLoading) {
         <div class="mb-6 flex items-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg px-4 py-3">
           <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,15 +85,15 @@
         </div>
       }
 
-      <!-- LOADING SKELETON -->
+      <!-- Esqueleto de carga -->
       @if (isLoading) {
-        <!-- Greeting skeleton -->
+        <!-- Esqueleto del saludo -->
         <div class="mb-8 animate-pulse">
           <div class="h-7 w-64 bg-slate-700/60 rounded mb-3"></div>
           <div class="h-4 w-48 bg-slate-800/60 rounded"></div>
         </div>
 
-        <!-- Stats skeleton -->
+        <!-- Esqueleto de estadísticas -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           @for (i of [1,2,3,4]; track i) {
             <div class="bg-[#12192e] rounded-lg p-5 border-t-4 border-slate-700 animate-pulse">
@@ -103,7 +103,7 @@
           }
         </div>
 
-        <!-- Projects skeleton -->
+        <!-- Esqueleto de proyectos -->
         <div class="mb-8">
           <div class="h-4 w-36 bg-slate-700/60 rounded mb-4 animate-pulse"></div>
           <div class="space-y-3">
@@ -115,21 +115,21 @@
         </div>
       }
 
-      <!-- LOADED DATA -->
+      <!-- Datos cargados -->
       @if (!isLoading && !error) {
-        <!-- Greeting -->
+        <!-- Saludo -->
         <div class="mb-8">
           <h2 class="text-2xl font-bold text-white tracking-wide font-ui">Buenos días, {{ userName }}</h2>
           <p class="text-slate-400 mt-1">
             @if (pendingTasks > 0) {
               Tienes <span class="text-orange-400 font-semibold">{{ pendingTasks }}</span> tareas pendientes para hoy
             } @else {
-              No tienes tareas pendientes hoy 🎉
+              No tienes tareas pendientes hoy
             }
           </p>
         </div>
 
-        <!-- Stats Grid -->
+        <!-- Estadísticas -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           @for (stat of stats; track stat.label; let i = $index) {
             <div class="bg-[#12192e] rounded-lg p-5 flex flex-col justify-between border-t-4"
@@ -140,11 +140,11 @@
           }
         </div>
 
-        <!-- Recent Projects -->
+        <!-- Proyectos recientes -->
         <div class="mb-8">
           <h3 class="text-sm font-bold text-white tracking-wider mb-4 font-ui">Proyectos recientes</h3>
 
-          <!-- Empty state -->
+          <!-- Estado vacío -->
           @if (recentProjects.length === 0) {
             <div class="bg-[#12192e] border border-dashed border-slate-700 rounded-lg p-8 text-center">
               <svg class="w-10 h-10 mx-auto text-slate-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,7 +157,7 @@
           }
 
           <div class="space-y-3">
-            <!-- Item -->
+            <!-- Proyecto -->
             @for (project of recentProjects; track project.id) {
               <div
                 class="bg-[#12192e] border border-slate-700 rounded-lg p-4 flex flex-col md:flex-row items-start md:items-center justify-between shadow-lg gap-4 md:gap-0">
@@ -181,8 +181,8 @@
                 <div class="flex items-center justify-end w-full md:w-auto gap-4 md:gap-6 mt-3 md:mt-0">
                   <span class="text-sm font-bold" [ngClass]="getTextProgressClass(project.progress)">{{ project.progress }}%</span>
                   <button
-                    class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded text-sm font-medium transition flex items-center gap-2 shadow-lg shadow-orange-500/20">
-                    Abrir <span>&rarr;</span>
+                    class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded text-sm font-bold transition flex items-center gap-2 shadow-lg shadow-orange-500/20 cursor-pointer">
+                    Abrir
                   </button>
                 </div>
               </div>
@@ -195,15 +195,15 @@
           <h3 class="text-sm font-bold text-white tracking-wider mb-4 font-ui">Acciones rápidas</h3>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
             <button
-              class="flex items-center justify-center p-4 rounded-lg bg-[#0e1629] hover:bg-slate-800 border-2 border-orange-500/20 text-orange-500 transition font-medium text-sm">
+              class="flex items-center justify-center p-4 rounded-lg bg-[#0e1629] hover:bg-slate-800 border-2 border-orange-500/20 text-orange-500 transition font-medium text-sm cursor-pointer">
               + Nuevo proyecto
             </button>
             <button
-              class="flex items-center justify-center p-4 rounded-lg bg-[#0e1629] hover:bg-slate-800 border-2 border-blue-500/20 text-blue-500 transition font-medium text-sm">
+              class="flex items-center justify-center p-4 rounded-lg bg-[#0e1629] hover:bg-slate-800 border-2 border-blue-500/20 text-blue-500 transition font-medium text-sm cursor-pointer">
               Invitar miembro
             </button>
             <button
-              class="flex items-center justify-center p-4 rounded-lg bg-[#0e1629] hover:bg-slate-800 border-2 border-purple-500/20 text-purple-400 transition font-medium text-sm">
+              class="flex items-center justify-center p-4 rounded-lg bg-[#0e1629] hover:bg-slate-800 border-2 border-purple-500/20 text-purple-400 transition font-medium text-sm cursor-pointer">
               Ver reportes
             </button>
           </div>

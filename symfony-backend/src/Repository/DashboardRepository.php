@@ -77,7 +77,7 @@ final class DashboardRepository
             return [];
         }
 
-        // Single batch query: get card counts per project (total + done) to avoid N+1
+        // Sacamos el total de tarjetas y las completadas de todos los proyectos de una vez
         $projectIds = array_map(static fn ($p) => $p->getId(), $projects);
 
         $cardStats = $this->entityManager->createQuery("
@@ -93,7 +93,7 @@ final class DashboardRepository
             ->setParameter('projectIds', $projectIds)
             ->getResult();
 
-        // Index stats by project ID
+        // Indexamos las estadísticas por ID de proyecto
         $statsMap = [];
         foreach ($cardStats as $row) {
             $statsMap[(int) $row['projectId']] = [
@@ -102,7 +102,7 @@ final class DashboardRepository
             ];
         }
 
-        // Batch-load memberships to avoid N+1 on role detection
+        // Cargamos las membresías del usuario en estos proyectos
         $memberships = $this->entityManager->createQuery('
             SELECT m
             FROM App\Entity\ProjectMember m
@@ -121,7 +121,7 @@ final class DashboardRepository
         foreach ($projects as $project) {
             $pid = $project->getId();
 
-            // Determine role
+            // Averiguamos el rol del usuario en este proyecto
             $role = 'Admin';
             if ($project->getOwner() !== $user) {
                 $membership = $membershipMap[$pid] ?? null;
