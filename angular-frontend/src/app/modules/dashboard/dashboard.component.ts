@@ -39,6 +39,27 @@ interface DashboardResponse {
   recentProjects: RecentProject[];
 }
 
+interface ProjectMemberDetail {
+  id: number;
+  name: string;
+  email: string;
+  avatarUrl: string | null;
+  role: string;
+}
+
+interface ProjectFull {
+  id: number;
+  name: string;
+  description: string | null;
+  color: string | null;
+  myRole: string;
+  progress: number;
+  totalTasks: number;
+  doneTasks: number;
+  members: ProjectMemberDetail[];
+  createdAt: string;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -55,6 +76,15 @@ export class DashboardComponent implements OnInit {
   isLoading = true;
   error = '';
   dropdownOpen = false;
+
+  // View state
+  activeView: 'dashboard' | 'projects' = 'dashboard';
+
+  // Projects view state
+  allProjects: ProjectFull[] = [];
+  isLoadingProjects = false;
+  projectsError = '';
+  expandedProjectIds: Set<number> = new Set();
 
   // Modal state
   showCreateModal = false;
@@ -260,6 +290,66 @@ export class DashboardComponent implements OnInit {
     localStorage.removeItem('jwt_token');
     sessionStorage.removeItem('jwt_token');
     this.router.navigate(['/']);
+  }
+
+  setView(view: 'dashboard' | 'projects'): void {
+    this.activeView = view;
+    if (view === 'projects' && this.allProjects.length === 0) {
+      this.fetchAllProjects();
+    }
+  }
+
+  fetchAllProjects(): void {
+    this.isLoadingProjects = true;
+    this.projectsError = '';
+
+    const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
+
+    this.http.get<{ projects: ProjectFull[] }>('/api/projects/all', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .pipe(
+        finalize(() => { this.isLoadingProjects = false; }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (res) => {
+          this.allProjects = res.projects;
+        },
+        error: () => {
+          this.projectsError = 'No se pudieron cargar los proyectos.';
+        }
+      });
+  }
+
+  toggleProjectExpand(projectId: number): void {
+    if (this.expandedProjectIds.has(projectId)) {
+      this.expandedProjectIds.delete(projectId);
+    } else {
+      this.expandedProjectIds.add(projectId);
+    }
+  }
+
+  isProjectExpanded(projectId: number): boolean {
+    return this.expandedProjectIds.has(projectId);
+  }
+
+  getRoleLabelClass(role: string): string {
+    switch (role) {
+      case 'owner': return 'bg-amber-500/20 text-amber-400';
+      case 'admin': return 'bg-purple-500/20 text-purple-400';
+      case 'manager': return 'bg-sky-500/20 text-sky-400';
+      default: return 'bg-emerald-500/20 text-emerald-400';
+    }
+  }
+
+  getRoleLabel(role: string): string {
+    switch (role) {
+      case 'owner': return 'Propietario';
+      case 'admin': return 'Admin';
+      case 'manager': return 'Gestor';
+      default: return 'Miembro';
+    }
   }
 
   openCreateModal(): void {

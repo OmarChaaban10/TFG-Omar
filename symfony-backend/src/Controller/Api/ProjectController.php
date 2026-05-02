@@ -248,4 +248,131 @@ class ProjectController extends AbstractController
 
         return $this->json(['message' => 'Usuario invitado correctamente al proyecto.']);
     }
+
+    #[Route('/all', name: 'all', methods: ['GET'])]
+    public function all(): JsonResponse
+    {
+        /** @var User|null $user */
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return $this->json(['message' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $projects = $this->em->createQuery('
+            SELECT DISTINCT p
+            FROM App\Entity\Project p
+            LEFT JOIN p.memberships m
+            WHERE (p.owner = :user OR m.user = :user)
+              AND p.archived = false
+            ORDER BY p.createdAt DESC
+        ')
+            ->setParameter('user', $user)
+            ->getResult();
+
+        if (count($projects) === 0) {
+            return $this->json(['projects' => []]);
+        }
+
+        $projectIds = array_map(static fn($p) => $p->getId(), $projects);
+
+        // Card stats
+        $cardStats = $this->em->createQuery("
+            SELECT IDENTITY(b.project) AS projectId,
+                   COUNT(c.id) AS totalCards,
+                   SUM(CASE WHEN LOWER(col.name) IN ('done', 'completado', 'hecho', 'finalizado', 'terminado') THEN 1 ELSE 0 END) AS doneCards
+            FROM App\Entity\Card c
+            JOIN c.column col
+            JOIN col.board b
+            WHERE b.project IN (:ids)
+            GROUP BY b.project
+        ")
+            ->setParameter('ids', $projectIds)
+            ->getResult();
+
+        $statsMap = [];
+        foreach ($cardStats as $row) {
+            $statsMap[(int) $row['projectId']] = [
+                'totalCards' => (int) $row['totalCards'],
+                'doneCards' => (int) $row['doneCards'],
+            ];
+        }
+
+        // All memberships for these projects
+        $allMemberships = $this->em->createQuery('
+            SELECT m, u
+            FROM App\Entity\ProjectMember m
+            JOIN m.user u
+            WHERE m.project IN (:ids)
+        ')
+            ->setParameter('ids', $projectIds)
+            ->getResult();
+
+        $membersMap = [];
+        foreach ($allMemberships as $m) {
+            $pid = $m->getProject()->getId();
+            $membersMap[$pid][] = [
+                'id' => $m->getUser()->getId(),
+                'name' => $m->getUser()->getName(),
+                'email' => $m->getUser()->getEmail(),
+                'avatarUrl' => $m->getUser()->getAvatarUrl(),
+                'role' => $m->getRole()->value,
+            ];
+        }
+
+        // User's own memberships for role detection
+        $userMembershipMap = [];
+        foreach ($allMemberships as $m) {
+            if ($m->getUser() === $user) {
+                $userMembershipMap[$m->getProject()->getId()] = $m;
+            }
+        }
+
+        $results = [];
+        foreach ($projects as $project) {
+            $pid = $project->getId();
+            $owner = $project->getOwner();
+
+            $myRole = 'Admin';
+            if ($owner !== $user) {
+                $membership = $userMembershipMap[$pid] ?? null;
+                if ($membership !== null) {
+                    $myRole = $membership->getRole()->value === 'manager' ? 'Gestor' : 'Miembro';
+                }
+            }
+
+            $stats = $statsMap[$pid] ?? ['totalCards' => 0, 'doneCards' => 0];
+            $progress = $stats['totalCards'] > 0
+                ? (int) round(($stats['doneCards'] / $stats['totalCards']) * 100)
+                : 0;
+
+            // Build members array: owner first, then members
+            $members = [
+                [
+                    'id' => $owner->getId(),
+                    'name' => $owner->getName(),
+                    'email' => $owner->getEmail(),
+                    'avatarUrl' => $owner->getAvatarUrl(),
+                    'role' => 'owner',
+                ],
+            ];
+            foreach ($membersMap[$pid] ?? [] as $member) {
+                $members[] = $member;
+            }
+
+            $results[] = [
+                'id' => $pid,
+                'name' => $project->getName(),
+                'description' => $project->getDescription(),
+                'color' => $project->getColor(),
+                'myRole' => $myRole,
+                'progress' => $progress,
+                'totalTasks' => $stats['totalCards'],
+                'doneTasks' => $stats['doneCards'],
+                'members' => $members,
+                'createdAt' => $project->getCreatedAt()->format('Y-m-d'),
+            ];
+        }
+
+        return $this->json(['projects' => $results]);
+    }
 }
