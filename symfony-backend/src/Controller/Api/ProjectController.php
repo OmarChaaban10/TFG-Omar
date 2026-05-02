@@ -169,4 +169,83 @@ class ProjectController extends AbstractController
 
         return $this->json(['results' => $results]);
     }
+
+    #[Route('/participating', name: 'participating', methods: ['GET'])]
+    public function participating(): JsonResponse
+    {
+        /** @var User|null $user */
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return $this->json(['message' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $projects = $this->em->createQuery('
+            SELECT DISTINCT p.id, p.name
+            FROM App\Entity\Project p
+            LEFT JOIN p.memberships m
+            WHERE (p.owner = :user OR m.user = :user)
+              AND p.archived = false
+            ORDER BY p.name ASC
+        ')
+            ->setParameter('user', $user)
+            ->getResult();
+
+        return $this->json(['projects' => $projects]);
+    }
+
+    #[Route('/{id}/invite', name: 'invite', methods: ['POST'])]
+    public function invite(int $id, Request $request): JsonResponse
+    {
+        /** @var User|null $user */
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return $this->json(['message' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $project = $this->em->getRepository(Project::class)->find($id);
+        if (!$project) {
+            return $this->json(['message' => 'Proyecto no encontrado.'], Response::HTTP_NOT_FOUND);
+        }
+
+        // Validate permissions (Must be owner or have a membership)
+        if ($project->getOwner() !== $user) {
+            $membership = $this->em->getRepository(\App\Entity\ProjectMember::class)
+                ->findOneBy(['project' => $project, 'user' => $user]);
+            if (!$membership) {
+                return $this->json(['message' => 'No tienes permisos para invitar en este proyecto.'], Response::HTTP_FORBIDDEN);
+            }
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $userIdToInvite = (int) ($data['userId'] ?? 0);
+        if ($userIdToInvite <= 0) {
+            return $this->json(['message' => 'ID de usuario inválido.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $userToInvite = $this->em->getRepository(User::class)->find($userIdToInvite);
+        if (!$userToInvite) {
+            return $this->json(['message' => 'Usuario a invitar no encontrado.'], Response::HTTP_NOT_FOUND);
+        }
+
+        if ($project->getOwner() === $userToInvite) {
+            return $this->json(['message' => 'Este usuario ya es el dueño del proyecto.'], Response::HTTP_CONFLICT);
+        }
+
+        $existingMembership = $this->em->getRepository(\App\Entity\ProjectMember::class)
+            ->findOneBy(['project' => $project, 'user' => $userToInvite]);
+        
+        if ($existingMembership) {
+            return $this->json(['message' => 'Este usuario ya es miembro del proyecto.'], Response::HTTP_CONFLICT);
+        }
+
+        $newMember = new \App\Entity\ProjectMember();
+        $newMember->setProject($project);
+        $newMember->setUser($userToInvite);
+        $newMember->setRole(\App\Enum\ProjectMemberRole::MEMBER);
+
+        $this->em->persist($newMember);
+        $this->em->flush();
+
+        return $this->json(['message' => 'Usuario invitado correctamente al proyecto.']);
+    }
 }
