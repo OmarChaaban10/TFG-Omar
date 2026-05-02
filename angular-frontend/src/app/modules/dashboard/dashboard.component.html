@@ -23,10 +23,10 @@
       </div>
     </div>
 
-    <div>
-      <!-- Avatar: imagen si existe, iniciales si no -->
-      <div class="w-9 h-9 rounded-full overflow-hidden ring-2 ring-orange-500/60 flex items-center justify-center"
-           [title]="userName">
+    <div class="relative" id="user-menu-container">
+      <!-- Avatar (click to toggle dropdown) -->
+      <button (click)="toggleDropdown()"
+        class="w-9 h-9 rounded-full overflow-hidden ring-2 ring-orange-500/60 flex items-center justify-center cursor-pointer focus:outline-none">
         @if (avatarUrl) {
           <img
             [src]="avatarUrl"
@@ -37,7 +37,26 @@
             {{ userInitials }}
           </div>
         }
-      </div>
+      </button>
+
+      <!-- Menu desplegable -->
+      @if (dropdownOpen) {
+        <div class="absolute right-0 mt-2 w-56 bg-[#12192e] border border-slate-700 rounded-lg shadow-xl shadow-black/40 z-50 overflow-hidden">
+          <div class="px-4 py-3 border-b border-slate-700">
+            <p class="text-sm font-medium text-white truncate">{{ userName }}</p>
+          </div>
+          <div class="py-1">
+            <button (click)="logout()"
+              class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:bg-slate-800 transition cursor-pointer">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1" />
+              </svg>
+              Cerrar sesion
+            </button>
+          </div>
+        </div>
+      }
     </div>
   </nav>
 
@@ -140,6 +159,85 @@
           }
         </div>
 
+        <!-- Buscar proyecto -->
+        <div class="mb-8">
+          <div class="relative">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 103.5 3.5a7.5 7.5 0 0013.15 13.15z" />
+            </svg>
+            <input
+              type="text"
+              [(ngModel)]="searchQuery"
+              (ngModelChange)="onSearchInput()"
+              placeholder="Buscar proyecto por nombre..."
+              class="w-full bg-[#12192e] border border-slate-700 rounded-lg pl-10 pr-10 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition" />
+            @if (searchQuery) {
+              <button (click)="clearSearch()"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            }
+          </div>
+
+          <!-- Resultados de busqueda -->
+          @if (isSearching) {
+            <div class="mt-4 flex items-center gap-2 text-slate-400 text-sm">
+              <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+              Buscando...
+            </div>
+          }
+
+          @if (hasSearched && !isSearching) {
+            <div class="mt-4">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-bold text-white tracking-wider font-ui">
+                  Resultados
+                  <span class="text-slate-500 font-normal ml-1">({{ searchResults.length }})</span>
+                </h3>
+              </div>
+
+              @if (searchResults.length === 0) {
+                <div class="bg-[#12192e] border border-dashed border-slate-700 rounded-lg p-6 text-center">
+                  <p class="text-slate-500 text-sm">No se encontraron proyectos con "{{ searchQuery }}".</p>
+                </div>
+              } @else {
+                <div class="space-y-3">
+                  @for (project of searchResults; track project.id) {
+                    <div
+                      class="bg-[#12192e] border border-slate-700 rounded-lg p-4 flex flex-col md:flex-row items-start md:items-center justify-between shadow-lg gap-4 md:gap-0">
+                      <div class="flex flex-col sm:flex-row items-start sm:items-center flex-1 md:pr-6 gap-3 sm:gap-6 w-full">
+                        <div class="sm:w-56 shrink-0">
+                          <span class="text-slate-200 font-medium font-ui">{{ project.name }}</span>
+                        </div>
+                        <span class="text-xs px-2.5 py-1 rounded font-medium" [ngClass]="getRoleClass(project.role)">
+                          {{ project.role }}
+                        </span>
+                        <div class="w-full sm:flex-1 mt-2 sm:mt-0">
+                          <div class="w-full bg-slate-800 rounded-full h-1.5">
+                            <div class="h-1.5 rounded-full" [ngClass]="getProgressClass(project.progress)" [style.width.%]="project.progress"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="flex items-center justify-end w-full md:w-auto gap-4 md:gap-6 mt-3 md:mt-0">
+                        <span class="text-sm font-bold" [ngClass]="getTextProgressClass(project.progress)">{{ project.progress }}%</span>
+                        <button
+                          class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded text-sm font-bold transition flex items-center gap-2 shadow-lg shadow-orange-500/20 cursor-pointer">
+                          Abrir
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+
         <!-- Proyectos recientes -->
         <div class="mb-8">
           <h3 class="text-sm font-bold text-white tracking-wider mb-4 font-ui">Proyectos recientes</h3>
@@ -194,7 +292,7 @@
         <div>
           <h3 class="text-sm font-bold text-white tracking-wider mb-4 font-ui">Acciones rápidas</h3>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-            <button
+            <button (click)="openCreateModal()"
               class="flex items-center justify-center p-4 rounded-lg bg-[#0e1629] hover:bg-slate-800 border-2 border-orange-500/20 text-orange-500 transition font-medium text-sm cursor-pointer">
               + Nuevo proyecto
             </button>
@@ -217,3 +315,101 @@
     TaskHive &copy; 2026
   </footer>
 </div>
+
+<!-- Modal: Crear proyecto -->
+@if (showCreateModal) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center">
+    <!-- Overlay -->
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" (click)="closeCreateModal()"></div>
+
+    <!-- Panel -->
+    <div class="relative w-full max-w-lg mx-4 bg-[#12192e] border border-slate-700 rounded-xl shadow-2xl shadow-black/50">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-700">
+        <h2 class="text-lg font-bold text-white">Nuevo proyecto</h2>
+        <button (click)="closeCreateModal()"
+          class="text-slate-400 hover:text-white transition cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="px-6 py-5 space-y-5">
+        <!-- Error -->
+        @if (createError) {
+          <div class="flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg px-3 py-2 text-sm">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            {{ createError }}
+          </div>
+        }
+
+        <!-- Nombre -->
+        <div>
+          <label for="project-name" class="block text-sm font-medium text-slate-300 mb-1.5">Nombre *</label>
+          <input
+            id="project-name"
+            type="text"
+            [(ngModel)]="newProjectName"
+            maxlength="255"
+            placeholder="Mi nuevo proyecto"
+            class="w-full bg-[#0b1120] border border-slate-700 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition" />
+        </div>
+
+        <!-- Descripcion -->
+        <div>
+          <label for="project-desc" class="block text-sm font-medium text-slate-300 mb-1.5">Descripcion</label>
+          <textarea
+            id="project-desc"
+            [(ngModel)]="newProjectDescription"
+            rows="3"
+            placeholder="Describe brevemente el proyecto..."
+            class="w-full bg-[#0b1120] border border-slate-700 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition resize-none"></textarea>
+        </div>
+
+        <!-- Color -->
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-2">Color del proyecto</label>
+          <div class="flex flex-wrap gap-2">
+            @for (color of colorPresets; track color) {
+              <button
+                type="button"
+                (click)="selectColor(color)"
+                class="w-8 h-8 rounded-full border-2 transition cursor-pointer"
+                [style.backgroundColor]="color"
+                [class.border-white]="newProjectColor === color"
+                [class.border-transparent]="newProjectColor !== color"
+                [class.scale-110]="newProjectColor === color">
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-700">
+        <button (click)="closeCreateModal()"
+          class="px-4 py-2 text-sm font-medium text-slate-400 hover:text-white transition cursor-pointer">
+          Cancelar
+        </button>
+        <button (click)="createProject()"
+          [disabled]="isCreating"
+          class="px-5 py-2 text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition shadow-lg shadow-orange-500/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+          @if (isCreating) {
+            <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            Creando...
+          } @else {
+            Crear proyecto
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
