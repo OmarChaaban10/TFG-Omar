@@ -60,10 +60,12 @@ interface ProjectFull {
   createdAt: string;
 }
 
+import { ThemeToggleComponent } from '../shared/theme-toggle/theme-toggle.component';
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ThemeToggleComponent],
   templateUrl: './dashboard.component.html'
 })
 export class DashboardComponent implements OnInit {
@@ -267,11 +269,6 @@ export class DashboardComponent implements OnInit {
   getStatColor(index: number): string {
     const colors = ['text-orange-500', 'text-blue-500', 'text-emerald-500', 'text-purple-500'];
     return colors[index] ?? 'text-slate-400';
-  }
-
-  getStatBorderClass(index: number): string {
-    const borders = ['border-orange-500', 'border-blue-500', 'border-emerald-500', 'border-purple-500'];
-    return borders[index] ?? 'border-slate-700';
   }
 
   toggleDropdown(): void {

@@ -2,6 +2,7 @@ import { Component, DestroyRef, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { RouterLink, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ThemeToggleComponent } from '../../shared/theme-toggle/theme-toggle.component';
 
 interface CheckEmailResponse {
   available: boolean;
@@ -15,7 +16,7 @@ interface RegisterResponse {
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, ThemeToggleComponent],
   templateUrl: './register.component.html'
 })
 export class RegisterComponent {

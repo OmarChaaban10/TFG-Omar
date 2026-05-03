@@ -2,12 +2,79 @@
 @source "./**/*.html";
 @source "./**/*.ts";
 
-/* You can add global styles to this file, and also import other style files */
+/* ===== THEME VARIABLES ===== */
 
-:root {
+/* Dark theme (default) */
+:root,
+[data-theme="dark"] {
+	--bg-page: #0c111f;
+	--bg-body: #0b1120;
+	--bg-nav: #090e1a;
+	--bg-sidebar: #090e1a;
+	--bg-card: #12192e;
+	--bg-card-alt: #0e1629;
+	--bg-input: #0b1120;
+	--bg-dropdown: #12192e;
+	--bg-modal: #12192e;
+	--bg-expanded: #0e1629;
+
+	--surface: #12192e;
+	--surface-hover: #1a2340;
+
+	--border: #1e293b;
+	--border-light: #334155;
+
+	--text-primary: #e2e8f0;
+	--text-secondary: #94a3b8;
+	--text-muted: #64748b;
+	--text-heading: #ffffff;
+
+	--login-bg: radial-gradient(circle at 20% 15%, rgba(14, 165, 233, 0.18), transparent 34%),
+		radial-gradient(circle at 80% 20%, rgba(251, 146, 60, 0.16), transparent 33%),
+		radial-gradient(circle at 50% 100%, rgba(56, 189, 248, 0.14), transparent 45%),
+		linear-gradient(180deg, #020617 0%, #06133a 44%, #050d2c 100%);
+	--login-card-bg: rgba(15, 23, 42, 0.7);
+	--login-card-border: rgba(51, 65, 85, 0.8);
+	--login-card-shadow: 0 20px 80px -35px rgba(249,115,22,0.45);
+
 	--font-ui: "Sora", sans-serif;
 	--font-copy: "Space Grotesk", sans-serif;
 }
+
+/* Light theme */
+[data-theme="light"] {
+	--bg-page: #f8fafc;
+	--bg-body: #f1f5f9;
+	--bg-nav: #ffffff;
+	--bg-sidebar: #ffffff;
+	--bg-card: #ffffff;
+	--bg-card-alt: #f8fafc;
+	--bg-input: #f1f5f9;
+	--bg-dropdown: #ffffff;
+	--bg-modal: #ffffff;
+	--bg-expanded: #f8fafc;
+
+	--surface: #f1f5f9;
+	--surface-hover: #e2e8f0;
+
+	--border: #e2e8f0;
+	--border-light: #cbd5e1;
+
+	--text-primary: #1e293b;
+	--text-secondary: #475569;
+	--text-muted: #94a3b8;
+	--text-heading: #0f172a;
+
+	--login-bg: radial-gradient(circle at 20% 15%, rgba(14, 165, 233, 0.08), transparent 34%),
+		radial-gradient(circle at 80% 20%, rgba(251, 146, 60, 0.06), transparent 33%),
+		radial-gradient(circle at 50% 100%, rgba(56, 189, 248, 0.06), transparent 45%),
+		linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 44%, #f1f5f9 100%);
+	--login-card-bg: rgba(255, 255, 255, 0.9);
+	--login-card-border: rgba(226, 232, 240, 0.9);
+	--login-card-shadow: 0 20px 80px -35px rgba(249,115,22,0.2);
+}
+
+/* ===== BASE STYLES ===== */
 
 html,
 body {
@@ -17,21 +84,125 @@ body {
 body {
 	margin: 0;
 	font-family: var(--font-copy);
-	background-color: #050b1f;
+	background-color: var(--bg-page);
+	color: var(--text-primary);
+	transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .font-ui {
 	font-family: var(--font-ui);
 }
 
+/* ===== THEMED CLASSES ===== */
+
+.th-page { background-color: var(--bg-page); color: var(--text-primary); }
+.th-body { background-color: var(--bg-body); }
+.th-nav { background-color: var(--bg-nav); border-color: var(--border); }
+.th-sidebar { background-color: var(--bg-sidebar); border-color: var(--border); }
+.th-card { background-color: var(--bg-card); border-color: var(--border); }
+.th-card-alt { background-color: var(--bg-card-alt); }
+.th-input {
+	background-color: var(--bg-input);
+	border-color: var(--border);
+	color: var(--text-primary);
+}
+.th-input::placeholder { color: var(--text-muted); }
+.th-dropdown { background-color: var(--bg-dropdown); border-color: var(--border); }
+.th-modal { background-color: var(--bg-modal); border-color: var(--border); }
+.th-expanded { background-color: var(--bg-expanded); }
+
+.th-text { color: var(--text-primary); }
+.th-text-secondary { color: var(--text-secondary); }
+.th-text-muted { color: var(--text-muted); }
+.th-text-heading { color: var(--text-heading); }
+
+.th-border { border-color: var(--border); }
+.th-border-light { border-color: var(--border-light); }
+
+.th-divider { border-color: var(--border); }
+
+/* Card and surface hover state for light theme */
+[data-theme="light"] .th-card { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06); }
+[data-theme="light"] .th-nav { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06); }
+
+/* ===== LIGHT MODE: Dashboard contrast overrides ===== */
+
+/* Text overrides — white text is invisible on light bg */
+[data-theme="light"] .text-white { color: #0f172a; }
+[data-theme="light"] .text-slate-100 { color: #1e293b; }
+[data-theme="light"] .text-slate-200 { color: #334155; }
+[data-theme="light"] .text-slate-300 { color: #475569; }
+[data-theme="light"] .text-slate-400 { color: #64748b; }
+[data-theme="light"] .text-slate-500 { color: #94a3b8; }
+[data-theme="light"] .text-slate-600 { color: #64748b; }
+
+/* Border overrides — dark borders are too harsh on light bg */
+[data-theme="light"] .border-slate-700 { border-color: #e2e8f0; }
+[data-theme="light"] .border-slate-800 { border-color: #e2e8f0; }
+[data-theme="light"] .border-slate-600 { border-color: #cbd5e1; }
+
+/* Fractional borders */
+[data-theme="light"] .border-slate-700\/50 { border-color: rgba(226, 232, 240, 0.8); }
+[data-theme="light"] .border-slate-700\/30 { border-color: rgba(226, 232, 240, 0.6); }
+
+/* Background overrides — dark backgrounds look wrong on light cards */
+[data-theme="light"] .bg-slate-800 { background-color: #e2e8f0; }
+[data-theme="light"] .bg-slate-700\/60 { background-color: rgba(203, 213, 225, 0.5); }
+[data-theme="light"] .bg-slate-800\/60 { background-color: rgba(226, 232, 240, 0.5); }
+[data-theme="light"] .bg-slate-800\/80 { background-color: rgba(226, 232, 240, 0.8); }
+[data-theme="light"] .bg-slate-800\/50 { background-color: rgba(226, 232, 240, 0.5); }
+[data-theme="light"] .bg-slate-800\/30 { background-color: rgba(226, 232, 240, 0.3); }
+
+/* Hover backgrounds */
+[data-theme="light"] .hover\:bg-slate-800:hover { background-color: #e2e8f0; }
+[data-theme="light"] .hover\:bg-slate-800\/50:hover { background-color: rgba(226, 232, 240, 0.5); }
+[data-theme="light"] .hover\:bg-slate-800\/30:hover { background-color: rgba(226, 232, 240, 0.4); }
+
+/* Hover text */
+[data-theme="light"] .hover\:text-white:hover { color: #0f172a; }
+
+/* Action buttons */
+[data-theme="light"] .bg-\[\#0e1629\] { background-color: #f1f5f9; }
+
+/* Shadow overrides */
+[data-theme="light"] .shadow-lg { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03); }
+[data-theme="light"] .shadow-black\/40 { --tw-shadow-color: rgba(0, 0, 0, 0.08); }
+[data-theme="light"] .shadow-black\/50 { --tw-shadow-color: rgba(0, 0, 0, 0.1); }
+
+/* Role badges — keep the colored text but boost lightmode contrast slightly */
+[data-theme="light"] .text-purple-400 { color: #7c3aed; }
+[data-theme="light"] .text-sky-400 { color: #0284c7; }
+[data-theme="light"] .text-emerald-400 { color: #059669; }
+[data-theme="light"] .text-amber-400 { color: #d97706; }
+[data-theme="light"] .text-blue-400 { color: #2563eb; }
+
+/* Badge backgrounds */
+[data-theme="light"] .bg-purple-500\/20 { background-color: rgba(124, 58, 237, 0.1); }
+[data-theme="light"] .bg-sky-500\/20 { background-color: rgba(2, 132, 199, 0.1); }
+[data-theme="light"] .bg-emerald-500\/20 { background-color: rgba(5, 150, 105, 0.1); }
+[data-theme="light"] .bg-amber-500\/20 { background-color: rgba(217, 119, 6, 0.1); }
+[data-theme="light"] .bg-blue-500\/20 { background-color: rgba(37, 99, 235, 0.1); }
+
+/* Error / success feedback */
+[data-theme="light"] .bg-red-500\/10 { background-color: rgba(239, 68, 68, 0.06); }
+[data-theme="light"] .border-red-500\/30 { border-color: rgba(239, 68, 68, 0.2); }
+[data-theme="light"] .text-red-400 { color: #dc2626; }
+[data-theme="light"] .text-red-200 { color: #dc2626; }
+
+/* Action button borders */
+[data-theme="light"] .border-orange-500\/20 { border-color: rgba(249, 115, 22, 0.3); }
+[data-theme="light"] .border-blue-500\/20 { border-color: rgba(37, 99, 235, 0.3); }
+[data-theme="light"] .border-purple-500\/20 { border-color: rgba(124, 58, 237, 0.3); }
+
+/* Placeholders */
+[data-theme="light"] .placeholder-slate-500::placeholder { color: #94a3b8; }
+
+/* ===== LOGIN SCENE ===== */
+
 .login-scene {
 	position: relative;
 	overflow: hidden;
-	background:
-		radial-gradient(circle at 20% 15%, rgba(14, 165, 233, 0.18), transparent 34%),
-		radial-gradient(circle at 80% 20%, rgba(251, 146, 60, 0.16), transparent 33%),
-		radial-gradient(circle at 50% 100%, rgba(56, 189, 248, 0.14), transparent 45%),
-		linear-gradient(180deg, #020617 0%, #06133a 44%, #050d2c 100%);
+	background: var(--login-bg);
 }
 
 .login-scene::before {
@@ -43,3 +214,43 @@ body {
 	background-size: 40px 40px;
 	pointer-events: none;
 }
+
+[data-theme="light"] .login-scene::before {
+	background-image: linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+}
+
+.login-card {
+	background: var(--login-card-bg);
+	border-color: var(--login-card-border);
+	box-shadow: var(--login-card-shadow);
+}
+
+/* Light-mode overrides for landing text */
+[data-theme="light"] .login-scene {
+	color: var(--text-primary);
+}
+
+/* Landing page form elements */
+.login-input {
+	background: rgba(15, 23, 42, 0.9);
+	border-color: rgba(51, 65, 85, 1);
+	color: #f1f5f9;
+}
+.login-input::placeholder { color: #64748b; }
+
+[data-theme="light"] .login-input {
+	background: rgba(241, 245, 249, 0.9);
+	border-color: rgba(203, 213, 225, 1);
+	color: #1e293b;
+}
+[data-theme="light"] .login-input::placeholder { color: #94a3b8; }
+
+.login-label { color: #cbd5e1; }
+[data-theme="light"] .login-label { color: #334155; }
+
+.login-title { color: #f1f5f9; }
+[data-theme="light"] .login-title { color: #0f172a; }
+
+.login-subtitle { color: #94a3b8; }
+[data-theme="light"] .login-subtitle { color: #475569; }

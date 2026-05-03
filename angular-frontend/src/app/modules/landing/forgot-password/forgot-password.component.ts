@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ThemeToggleComponent } from '../../shared/theme-toggle/theme-toggle.component';
 
 interface ForgotPasswordResponse {
   message: string;
@@ -11,7 +12,7 @@ interface ForgotPasswordResponse {
 @Component({
   selector: 'app-forgot-password',
   standalone: true,
-  imports: [RouterLink, FormsModule],
+  imports: [RouterLink, FormsModule, ThemeToggleComponent],
   templateUrl: './forgot-password.component.html'
 })
 export class ForgotPasswordComponent {

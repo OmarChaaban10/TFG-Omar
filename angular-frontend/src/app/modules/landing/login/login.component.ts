@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { RouterLink, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ThemeToggleComponent } from '../../shared/theme-toggle/theme-toggle.component';
 
 interface LoginResponse {
   token: string;
@@ -12,7 +13,7 @@ interface LoginResponse {
   selector: 'app-login',
   standalone: true,
   templateUrl: './login.component.html',
-  imports: [RouterLink, ReactiveFormsModule]
+  imports: [RouterLink, ReactiveFormsModule, ThemeToggleComponent]
 })
 export class LoginComponent implements OnInit {
   loginForm!: FormGroup;
