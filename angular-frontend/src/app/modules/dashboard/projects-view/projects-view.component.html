@@ -1,0 +1,143 @@
+<div class="mb-6">
+  <h2 class="text-2xl font-bold text-white tracking-wide font-ui">Mis Proyectos</h2>
+  <p class="text-slate-400 mt-1">Todos los proyectos en los que participas</p>
+</div>
+
+<!-- Error -->
+@if (projectsError && !isLoadingProjects) {
+<div
+  class="mb-6 flex items-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg px-4 py-3">
+  <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+  </svg>
+  <span>{{ projectsError }}</span>
+  <button (click)="fetchAllProjects()"
+    class="ml-auto text-xs underline hover:text-red-300 transition cursor-pointer">Reintentar</button>
+</div>
+}
+
+<!-- Loading -->
+@if (isLoadingProjects) {
+<div class="space-y-4">
+  @for (i of [1,2,3,4]; track i) {
+  <div class="th-card border border-slate-700/50 rounded-lg p-6 animate-pulse">
+    <div class="h-5 w-48 bg-slate-700/60 rounded mb-3"></div>
+    <div class="h-3 w-32 bg-slate-800/60 rounded"></div>
+  </div>
+  }
+</div>
+}
+
+<!-- Projects list -->
+@if (!isLoadingProjects && !projectsError) {
+
+@if (allProjects.length === 0) {
+<div class="th-card border border-dashed border-slate-700 rounded-lg p-8 text-center">
+  <svg class="w-12 h-12 mx-auto text-slate-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+      d="M3 7a2 2 0 012-2h3l2 2h7a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+  </svg>
+  <p class="text-slate-500">No tienes proyectos todavia.</p>
+  <button (click)="openCreateModal()"
+    class="mt-3 text-orange-400 hover:text-orange-300 text-sm font-medium transition cursor-pointer">+ Crear
+    primer proyecto</button>
+</div>
+}
+
+<div class="space-y-4">
+  @for (project of allProjects; track project.id) {
+  <div class="th-card border border-slate-700 rounded-lg overflow-hidden transition-all">
+    <!-- Project header (clickable to expand) -->
+    <button (click)="toggleProjectExpand(project.id)"
+      class="w-full p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-left cursor-pointer hover:bg-slate-800/30 transition">
+      <div class="flex items-center gap-4 flex-1 min-w-0">
+        <!-- Color dot -->
+        <div class="w-3 h-3 rounded-full shrink-0" [style.backgroundColor]="project.color || '#f97316'"></div>
+        <div class="min-w-0">
+          <h3 class="text-white font-semibold text-base truncate">{{ project.name }}</h3>
+          @if (project.description) {
+          <p class="text-slate-400 text-sm mt-0.5 truncate">{{ project.description }}</p>
+          }
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4 shrink-0">
+        <!-- My role badge -->
+        <span class="text-xs px-2.5 py-1 rounded font-medium" [ngClass]="getRoleClass(project.myRole)">
+          {{ project.myRole }}
+        </span>
+
+        <!-- Progress -->
+        <div class="flex items-center gap-2 w-32">
+          <div class="flex-1 bg-slate-800 rounded-full h-1.5">
+            <div class="h-1.5 rounded-full" [ngClass]="getProgressClass(project.progress)"
+              [style.width.%]="project.progress"></div>
+          </div>
+          <span class="text-xs font-bold w-8 text-right" [ngClass]="getTextProgressClass(project.progress)">{{
+            project.progress }}%</span>
+        </div>
+
+        <!-- Members count -->
+        <div class="flex items-center gap-1 text-slate-400 text-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span>{{ project.members.length }}</span>
+        </div>
+
+        <!-- Expand chevron -->
+        <svg class="w-5 h-5 text-slate-400 transition-transform"
+          [class.rotate-180]="isProjectExpanded(project.id)" fill="none" stroke="currentColor"
+          viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+    </button>
+
+    <!-- Expanded: Members list -->
+    @if (isProjectExpanded(project.id)) {
+    <div class="border-t border-slate-700 th-expanded">
+      <div class="px-5 py-3">
+        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Integrantes ({{
+          project.members.length }})</h4>
+        <div class="space-y-2">
+          @for (member of project.members; track member.id) {
+          <div class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800/50 transition">
+            <!-- Avatar -->
+            <div
+              class="w-9 h-9 rounded-full overflow-hidden shrink-0 flex items-center justify-center border border-slate-600"
+              [class.bg-amber-500/20]="member.role === 'owner'" [class.bg-blue-500/20]="member.role !== 'owner'">
+              @if (member.avatarUrl) {
+              <img [src]="member.avatarUrl" [alt]="member.name" class="w-full h-full object-cover">
+              } @else {
+              <span class="font-bold text-xs" [class.text-amber-400]="member.role === 'owner'"
+                [class.text-blue-400]="member.role !== 'owner'">{{ member.name.charAt(0).toUpperCase() }}</span>
+              }
+            </div>
+            <!-- Info -->
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-white truncate">{{ member.name }}</p>
+              <p class="text-xs text-slate-500 truncate">{{ member.email }}</p>
+            </div>
+            <!-- Role badge -->
+            <span class="text-xs px-2 py-0.5 rounded font-medium" [ngClass]="getRoleLabelClass(member.role)">
+              {{ getRoleLabel(member.role) }}
+            </span>
+          </div>
+          }
+        </div>
+      </div>
+
+      <!-- Project meta -->
+      <div class="px-5 py-3 border-t border-slate-700/50 flex items-center gap-6 text-xs text-slate-500">
+        <span>Creado: {{ project.createdAt }}</span>
+        <span>Tareas: {{ project.doneTasks }}/{{ project.totalTasks }}</span>
+      </div>
+    </div>
+    }
+  </div>
+  }
+</div>
+}

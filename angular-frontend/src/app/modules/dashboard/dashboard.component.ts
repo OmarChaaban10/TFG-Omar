@@ -19,18 +19,6 @@ interface RecentProject {
   progress: number;
 }
 
-interface ProjectSimple {
-  id: number;
-  name: string;
-}
-
-interface UserSearch {
-  id: number;
-  name: string;
-  email: string;
-  avatarUrl: string | null;
-}
-
 interface DashboardResponse {
   userName: string;
   avatarUrl: string | null;
@@ -39,33 +27,15 @@ interface DashboardResponse {
   recentProjects: RecentProject[];
 }
 
-interface ProjectMemberDetail {
-  id: number;
-  name: string;
-  email: string;
-  avatarUrl: string | null;
-  role: string;
-}
-
-interface ProjectFull {
-  id: number;
-  name: string;
-  description: string | null;
-  color: string | null;
-  myRole: string;
-  progress: number;
-  totalTasks: number;
-  doneTasks: number;
-  members: ProjectMemberDetail[];
-  createdAt: string;
-}
-
 import { ThemeToggleComponent } from '../shared/theme-toggle/theme-toggle.component';
+import { ProjectsViewComponent } from './projects-view/projects-view.component';
+import { CreateProjectModalComponent } from './create-project-modal/create-project-modal.component';
+import { InviteMemberModalComponent } from './invite-member-modal/invite-member-modal.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, ThemeToggleComponent],
+  imports: [CommonModule, FormsModule, ThemeToggleComponent, ProjectsViewComponent, CreateProjectModalComponent, InviteMemberModalComponent],
   templateUrl: './dashboard.component.html'
 })
 export class DashboardComponent implements OnInit {
@@ -84,29 +54,15 @@ export class DashboardComponent implements OnInit {
     if (hour >= 12 && hour < 20) return 'Buenas tardes';
     return 'Buenas noches';
   }
+
   dropdownOpen = false;
 
   // View state
   activeView: 'dashboard' | 'projects' = 'dashboard';
 
-  // Projects view state
-  allProjects: ProjectFull[] = [];
-  isLoadingProjects = false;
-  projectsError = '';
-  expandedProjectIds: Set<number> = new Set();
-
-  // Modal state
+  // Modal visibility
   showCreateModal = false;
-  newProjectName = '';
-  newProjectDescription = '';
-  newProjectColor = '';
-  isCreating = false;
-  createError = '';
-
-  readonly colorPresets = [
-    '#f97316', '#3b82f6', '#10b981', '#a855f7',
-    '#ef4444', '#eab308', '#06b6d4', '#ec4899',
-  ];
+  showInviteModal = false;
 
   // Search state
   searchQuery = '';
@@ -115,20 +71,6 @@ export class DashboardComponent implements OnInit {
   hasSearched = false;
   private readonly searchSubject = new Subject<string>();
 
-  // Invite state
-  showInviteModal = false;
-  participatingProjects: ProjectSimple[] = [];
-  selectedProjectId = 0;
-  inviteSearchQuery = '';
-  inviteSearchResults: UserSearch[] = [];
-  selectedUserToInvite: UserSearch | null = null;
-  isInviting = false;
-  isSearchingUsers = false;
-  hasSearchedUsers = false;
-  inviteError = '';
-  inviteSuccessMessage = '';
-  private readonly userSearchSubject = new Subject<{ query: string, projectId: number }>();
-
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -136,7 +78,6 @@ export class DashboardComponent implements OnInit {
   ngOnInit(): void {
     this.fetchDashboardData();
     this.initSearchListener();
-    this.initUserSearchListener();
   }
 
   private initSearchListener(): void {
@@ -180,39 +121,6 @@ export class DashboardComponent implements OnInit {
     this.searchQuery = '';
     this.searchResults = [];
     this.hasSearched = false;
-  }
-
-  private initUserSearchListener(): void {
-    const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
-
-    this.userSearchSubject.pipe(
-      debounceTime(300),
-      distinctUntilChanged((prev, curr) => prev.query === curr.query && prev.projectId === curr.projectId),
-      switchMap(({ query, projectId }) => {
-        const trimmed = query.trim();
-        if (trimmed === '' || projectId === 0) {
-          this.hasSearchedUsers = false;
-          this.inviteSearchResults = [];
-          this.isSearchingUsers = false;
-          return [];
-        }
-        this.isSearchingUsers = true;
-        return this.http.get<{ results: UserSearch[] }>('/api/users/search', {
-          params: { q: trimmed, projectId: projectId.toString() },
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      }),
-      takeUntilDestroyed(this.destroyRef),
-    ).subscribe({
-      next: (res) => {
-        this.inviteSearchResults = res.results;
-        this.hasSearchedUsers = true;
-        this.isSearchingUsers = false;
-      },
-      error: () => {
-        this.isSearchingUsers = false;
-      },
-    });
   }
 
   fetchDashboardData(): void {
@@ -298,195 +206,13 @@ export class DashboardComponent implements OnInit {
 
   setView(view: 'dashboard' | 'projects'): void {
     this.activeView = view;
-    if (view === 'projects' && this.allProjects.length === 0) {
-      this.fetchAllProjects();
-    }
-  }
-
-  fetchAllProjects(): void {
-    this.isLoadingProjects = true;
-    this.projectsError = '';
-
-    const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
-
-    this.http.get<{ projects: ProjectFull[] }>('/api/projects/all', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .pipe(
-        finalize(() => { this.isLoadingProjects = false; }),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: (res) => {
-          this.allProjects = res.projects;
-        },
-        error: () => {
-          this.projectsError = 'No se pudieron cargar los proyectos.';
-        }
-      });
-  }
-
-  toggleProjectExpand(projectId: number): void {
-    if (this.expandedProjectIds.has(projectId)) {
-      this.expandedProjectIds.delete(projectId);
-    } else {
-      this.expandedProjectIds.add(projectId);
-    }
-  }
-
-  isProjectExpanded(projectId: number): boolean {
-    return this.expandedProjectIds.has(projectId);
-  }
-
-  getRoleLabelClass(role: string): string {
-    switch (role) {
-      case 'owner': return 'bg-amber-500/20 text-amber-400';
-      case 'admin': return 'bg-purple-500/20 text-purple-400';
-      case 'manager': return 'bg-sky-500/20 text-sky-400';
-      default: return 'bg-emerald-500/20 text-emerald-400';
-    }
-  }
-
-  getRoleLabel(role: string): string {
-    switch (role) {
-      case 'owner': return 'Propietario';
-      case 'admin': return 'Admin';
-      case 'manager': return 'Gestor';
-      default: return 'Miembro';
-    }
   }
 
   openCreateModal(): void {
-    this.newProjectName = '';
-    this.newProjectDescription = '';
-    this.newProjectColor = '';
-    this.createError = '';
     this.showCreateModal = true;
-  }
-
-  closeCreateModal(): void {
-    this.showCreateModal = false;
-  }
-
-  selectColor(color: string): void {
-    this.newProjectColor = this.newProjectColor === color ? '' : color;
-  }
-
-  createProject(): void {
-    const name = this.newProjectName.trim();
-    if (name === '') {
-      this.createError = 'El nombre del proyecto es obligatorio.';
-      return;
-    }
-
-    this.isCreating = true;
-    this.createError = '';
-
-    const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
-
-    this.http.post<{ message: string }>('/api/projects', {
-      name,
-      description: this.newProjectDescription.trim(),
-      color: this.newProjectColor,
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .pipe(
-        finalize(() => { this.isCreating = false; }),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: () => {
-          this.showCreateModal = false;
-          this.fetchDashboardData();
-        },
-        error: (err) => {
-          this.createError = err.error?.message ?? 'Error al crear el proyecto.';
-        }
-      });
   }
 
   openInviteModal(): void {
     this.showInviteModal = true;
-    this.selectedProjectId = 0;
-    this.inviteSearchQuery = '';
-    this.inviteSearchResults = [];
-    this.selectedUserToInvite = null;
-    this.inviteError = '';
-    this.inviteSuccessMessage = '';
-    this.hasSearchedUsers = false;
-
-    const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
-    this.http.get<{ projects: ProjectSimple[] }>('/api/projects/participating', {
-      headers: { Authorization: `Bearer ${token}` }
-    }).pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => {
-          this.participatingProjects = res.projects;
-          if (this.participatingProjects.length > 0) {
-            this.selectedProjectId = this.participatingProjects[0].id;
-          }
-        },
-        error: () => {
-          this.inviteError = 'No se pudieron cargar los proyectos.';
-        }
-      });
-  }
-
-  closeInviteModal(): void {
-    this.showInviteModal = false;
-  }
-
-  onProjectChange(): void {
-    this.inviteSearchQuery = '';
-    this.inviteSearchResults = [];
-    this.selectedUserToInvite = null;
-    this.hasSearchedUsers = false;
-  }
-
-  onInviteSearchInput(): void {
-    this.selectedUserToInvite = null; // Reset selection on new search
-    this.userSearchSubject.next({ query: this.inviteSearchQuery, projectId: Number(this.selectedProjectId) });
-  }
-
-  selectUserToInvite(user: UserSearch): void {
-    this.selectedUserToInvite = user;
-    this.inviteSearchQuery = user.name;
-    this.inviteSearchResults = [];
-    this.hasSearchedUsers = false;
-  }
-
-  submitInvite(): void {
-    if (!this.selectedUserToInvite || !this.selectedProjectId) {
-      this.inviteError = 'Debes seleccionar un proyecto y un usuario.';
-      return;
-    }
-
-    this.isInviting = true;
-    this.inviteError = '';
-    this.inviteSuccessMessage = '';
-
-    const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
-
-    this.http.post<{ message: string }>(`/api/projects/${this.selectedProjectId}/invite`, {
-      userId: this.selectedUserToInvite.id
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .pipe(
-        finalize(() => { this.isInviting = false; }),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: (res) => {
-          this.inviteSuccessMessage = res.message;
-          this.selectedUserToInvite = null;
-          this.inviteSearchQuery = '';
-          this.fetchDashboardData(); // Refresh to update team members count if applicable
-        },
-        error: (err) => {
-          this.inviteError = err.error?.message ?? 'Error al invitar al usuario.';
-        }
-      });
   }
 }
