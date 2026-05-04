@@ -28,14 +28,15 @@ interface DashboardResponse {
 }
 
 import { ThemeToggleComponent } from '../shared/theme-toggle/theme-toggle.component';
-import { ProjectsViewComponent } from './projects-view/projects-view.component';
+import { ProjectsViewComponent } from './projects/projects.component';
 import { CreateProjectModalComponent } from './create-project-modal/create-project-modal.component';
 import { InviteMemberModalComponent } from './invite-member-modal/invite-member-modal.component';
+import { MembersViewComponent } from './members/members.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, ThemeToggleComponent, ProjectsViewComponent, CreateProjectModalComponent, InviteMemberModalComponent],
+  imports: [CommonModule, FormsModule, ThemeToggleComponent, ProjectsViewComponent, CreateProjectModalComponent, InviteMemberModalComponent, MembersViewComponent],
   templateUrl: './dashboard.component.html'
 })
 export class DashboardComponent implements OnInit {
@@ -58,7 +59,7 @@ export class DashboardComponent implements OnInit {
   dropdownOpen = false;
 
   // View state
-  activeView: 'dashboard' | 'projects' = 'dashboard';
+  activeView: 'dashboard' | 'projects' | 'members' = 'dashboard';
 
   // Modal visibility
   showCreateModal = false;
@@ -204,7 +205,7 @@ export class DashboardComponent implements OnInit {
     this.router.navigate(['/']);
   }
 
-  setView(view: 'dashboard' | 'projects'): void {
+  setView(view: 'dashboard' | 'projects' | 'members'): void {
     this.activeView = view;
   }
 
