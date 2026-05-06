@@ -336,12 +336,12 @@
 
       <!-- ===== VISTA: PROYECTOS ===== -->
       @if (activeView === 'projects') {
-      <app-projects-view (requestCreateProject)="openCreateModal()"></app-projects-view>
+      <app-projects (requestCreateProject)="openCreateModal()"></app-projects>
       }
 
       <!-- ===== VISTA: MIEMBROS ===== -->
       @if (activeView === 'members') {
-      <app-members-view></app-members-view>
+      <app-members></app-members>
       }
 
     </main>

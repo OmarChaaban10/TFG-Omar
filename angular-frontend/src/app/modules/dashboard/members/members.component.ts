@@ -35,12 +35,12 @@ interface MemberFull {
 }
 
 @Component({
-  selector: 'app-members-view',
+  selector: 'app-members',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './members-view.component.html',
+  templateUrl: './members.component.html',
 })
-export class MembersViewComponent implements OnInit {
+export class MembersComponent implements OnInit {
   allMembers: MemberFull[] = [];
   isLoadingMembers = false;
   membersError = '';

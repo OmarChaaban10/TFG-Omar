@@ -28,15 +28,15 @@ interface DashboardResponse {
 }
 
 import { ThemeToggleComponent } from '../shared/theme-toggle/theme-toggle.component';
-import { ProjectsViewComponent } from './projects/projects.component';
+import { ProjectsComponent } from './projects/projects.component';
 import { CreateProjectModalComponent } from './create-project-modal/create-project-modal.component';
 import { InviteMemberModalComponent } from './invite-member-modal/invite-member-modal.component';
-import { MembersViewComponent } from './members/members.component';
+import { MembersComponent } from './members/members.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, ThemeToggleComponent, ProjectsViewComponent, CreateProjectModalComponent, InviteMemberModalComponent, MembersViewComponent],
+  imports: [CommonModule, FormsModule, ThemeToggleComponent, ProjectsComponent, CreateProjectModalComponent, InviteMemberModalComponent, MembersComponent],
   templateUrl: './dashboard.component.html'
 })
 export class DashboardComponent implements OnInit {

@@ -26,12 +26,12 @@ interface ProjectFull {
 }
 
 @Component({
-  selector: 'app-projects-view',
+  selector: 'app-projects',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './projects-view.component.html',
+  templateUrl: './projects.component.html',
 })
-export class ProjectsViewComponent implements OnInit {
+export class ProjectsComponent implements OnInit {
   @Output() requestCreateProject = new EventEmitter<void>();
 
   allProjects: ProjectFull[] = [];
