@@ -12,12 +12,14 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use App\Service\ProjectLogService;
 
 #[Route('/api/projects', name: 'api_projects_')]
 class ProjectController extends AbstractController
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
+        private readonly ProjectLogService $logService,
     ) {
     }
 
@@ -61,6 +63,8 @@ class ProjectController extends AbstractController
 
         $this->em->persist($project);
         $this->em->flush();
+
+        $this->logService->logAction($project, $user, 'project_created', 'El proyecto fue creado.');
 
         return $this->json([
             'message' => 'Proyecto creado correctamente.',
@@ -246,6 +250,8 @@ class ProjectController extends AbstractController
         $this->em->persist($newMember);
         $this->em->flush();
 
+        $this->logService->logAction($project, $user, 'member_invited', 'Invitó al usuario ' . $userToInvite->getName() . '.');
+
         return $this->json(['message' => 'Usuario invitado correctamente al proyecto.']);
     }
 
@@ -374,5 +380,51 @@ class ProjectController extends AbstractController
         }
 
         return $this->json(['projects' => $results]);
+    }
+
+    #[Route('/{id}/logs', name: 'logs', methods: ['GET'])]
+    public function logs(int $id): JsonResponse
+    {
+        /** @var User|null $user */
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return $this->json(['message' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $project = $this->em->getRepository(Project::class)->find($id);
+        if (!$project) {
+            return $this->json(['message' => 'Proyecto no encontrado.'], Response::HTTP_NOT_FOUND);
+        }
+
+        // Validate permissions
+        if ($project->getOwner() !== $user) {
+            $membership = $this->em->getRepository(\App\Entity\ProjectMember::class)
+                ->findOneBy(['project' => $project, 'user' => $user]);
+            if (!$membership) {
+                return $this->json(['message' => 'No tienes permisos para ver los logs.'], Response::HTTP_FORBIDDEN);
+            }
+        }
+
+        $logs = $this->em->getRepository(\App\Entity\ProjectLog::class)->findBy(
+            ['project' => $project],
+            ['createdAt' => 'DESC']
+        );
+
+        $data = array_map(function ($log) {
+            return [
+                'id' => $log->getId(),
+                'action' => $log->getAction(),
+                'description' => $log->getDescription(),
+                'details' => $log->getDetails(),
+                'createdAt' => $log->getCreatedAt()->format('c'),
+                'user' => $log->getUser() ? [
+                    'id' => $log->getUser()->getId(),
+                    'name' => $log->getUser()->getName(),
+                    'avatarUrl' => $log->getUser()->getAvatarUrl(),
+                ] : null,
+            ];
+        }, $logs);
+
+        return $this->json(['logs' => $data]);
     }
 }

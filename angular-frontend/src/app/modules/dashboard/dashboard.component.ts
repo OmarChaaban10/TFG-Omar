@@ -32,11 +32,12 @@ import { ProjectsComponent } from './projects/projects.component';
 import { CreateProjectModalComponent } from './create-project-modal/create-project-modal.component';
 import { InviteMemberModalComponent } from './invite-member-modal/invite-member-modal.component';
 import { MembersComponent } from './members/members.component';
+import { ReportsComponent } from './reports/reports.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, ThemeToggleComponent, ProjectsComponent, CreateProjectModalComponent, InviteMemberModalComponent, MembersComponent],
+  imports: [CommonModule, FormsModule, ThemeToggleComponent, ProjectsComponent, CreateProjectModalComponent, InviteMemberModalComponent, MembersComponent, ReportsComponent],
   templateUrl: './dashboard.component.html'
 })
 export class DashboardComponent implements OnInit {
@@ -59,7 +60,7 @@ export class DashboardComponent implements OnInit {
   dropdownOpen = false;
 
   // View state
-  activeView: 'dashboard' | 'projects' | 'members' = 'dashboard';
+  activeView: 'dashboard' | 'projects' | 'members' | 'reports' = 'dashboard';
 
   // Modal visibility
   showCreateModal = false;
@@ -205,7 +206,7 @@ export class DashboardComponent implements OnInit {
     this.router.navigate(['/']);
   }
 
-  setView(view: 'dashboard' | 'projects' | 'members'): void {
+  setView(view: 'dashboard' | 'projects' | 'members' | 'reports'): void {
     this.activeView = view;
   }
 

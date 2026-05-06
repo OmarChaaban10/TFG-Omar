@@ -1,0 +1,113 @@
+<div class="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+  <div>
+    <h2 class="text-2xl font-bold text-white tracking-wide font-ui">Reportes y Auditoría</h2>
+    <p class="text-slate-400 mt-1">Consulta el historial de actividades de tus proyectos</p>
+  </div>
+
+  @if (projects.length > 0) {
+  <div class="w-full sm:w-64">
+    <label class="block text-xs font-medium text-slate-400 mb-1.5 uppercase tracking-wider">Seleccionar Proyecto</label>
+    <div class="relative">
+      <select [(ngModel)]="selectedProjectId" (change)="onProjectChange()"
+        class="th-input w-full appearance-none rounded-lg px-4 py-2.5 text-sm font-medium border border-slate-700/50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors outline-none cursor-pointer">
+        @for (p of projects; track p.id) {
+        <option [value]="p.id">{{ p.name }}</option>
+        }
+      </select>
+      <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+    </div>
+  </div>
+  }
+</div>
+
+<!-- Errors -->
+@if (projectsError && !isLoadingProjects) {
+<div class="mb-6 flex items-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg px-4 py-3">
+  <span>{{ projectsError }}</span>
+</div>
+}
+@if (logsError && !isLoadingLogs) {
+<div class="mb-6 flex items-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg px-4 py-3">
+  <span>{{ logsError }}</span>
+</div>
+}
+
+<!-- Loading Projects -->
+@if (isLoadingProjects) {
+<div class="th-card rounded-lg p-8 flex items-center justify-center">
+  <div class="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+</div>
+}
+
+<!-- Empty Projects State -->
+@if (!isLoadingProjects && !projectsError && projects.length === 0) {
+<div class="th-card border border-dashed border-slate-700 rounded-lg p-8 text-center">
+  <svg class="w-12 h-12 mx-auto text-slate-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+  </svg>
+  <p class="text-slate-500">No participas en ningún proyecto para ver reportes.</p>
+</div>
+}
+
+<!-- Logs View -->
+@if (selectedProjectId && !isLoadingProjects) {
+  <div class="th-card border border-slate-700/50 rounded-lg p-6">
+    @if (isLoadingLogs) {
+      <div class="space-y-6">
+        @for (i of [1,2,3]; track i) {
+        <div class="flex gap-4 animate-pulse">
+          <div class="w-10 h-10 rounded-full bg-slate-700/60 shrink-0"></div>
+          <div class="flex-1 space-y-2 py-1">
+            <div class="h-4 bg-slate-700/60 rounded w-3/4"></div>
+            <div class="h-3 bg-slate-800/60 rounded w-1/4"></div>
+          </div>
+        </div>
+        }
+      </div>
+    } @else if (logs.length === 0) {
+      <div class="text-center py-8">
+        <svg class="w-12 h-12 mx-auto text-slate-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p class="text-slate-500">Aún no hay actividad registrada en este proyecto.</p>
+      </div>
+    } @else {
+      <!-- Timeline -->
+      <div class="relative border-l border-slate-700/50 ml-5 space-y-8 pb-4">
+        @for (log of logs; track log.id) {
+        <div class="relative pl-8">
+          <!-- Timeline dot icon -->
+          <div class="absolute -left-5 top-0.5 w-10 h-10 rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center text-blue-400 z-10">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="getActionIcon(log.action)" />
+            </svg>
+          </div>
+
+          <div class="bg-slate-800/30 hover:bg-slate-800/50 transition-colors rounded-lg border border-slate-700/50 p-4">
+            <div class="flex items-center gap-3 mb-2">
+              @if (log.user) {
+                @if (log.user.avatarUrl) {
+                  <img [src]="log.user.avatarUrl" [alt]="log.user.name" class="w-6 h-6 rounded-full object-cover">
+                } @else {
+                  <div class="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30 text-blue-400 text-xs font-bold">
+                    {{ log.user.name.charAt(0).toUpperCase() }}
+                  </div>
+                }
+                <span class="text-sm font-semibold text-slate-200">{{ log.user.name }}</span>
+              } @else {
+                <span class="text-sm font-semibold text-slate-200">Sistema</span>
+              }
+              <span class="text-xs text-slate-500 ml-auto">{{ log.createdAt | date:'medium' }}</span>
+            </div>
+            <p class="text-slate-300 text-sm">{{ log.description }}</p>
+          </div>
+        </div>
+        }
+      </div>
+    }
+  </div>
+}
