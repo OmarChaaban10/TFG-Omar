@@ -8,11 +8,12 @@
   <main class="mx-auto flex max-w-6xl items-center justify-center px-4 py-10 sm:px-6" style="min-height: calc(100vh - 86px)">
     <section class="login-card w-full max-w-md rounded-3xl border p-6 backdrop-blur-sm sm:p-8">
 
-      <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-amber-500 to-orange-600 text-lg font-bold text-white" style="box-shadow: 0 10px 24px rgba(234,88,12,0.4)">
-        TH
+      <!-- Logo -->
+      <div class="flex justify-center align-center">
+        <img src="taskhive_logo.png" class="w-14 h-16" alt="TaskHive Logo">
       </div>
 
-      <h1 class="mt-5 text-center text-3xl font-bold tracking-tight login-title">Crear cuenta</h1>
+      <h1 class="mt-3 text-center text-3xl font-bold tracking-tight login-title">Crear cuenta</h1>
       <p class="mt-1 text-center text-sm login-subtitle">Regístrate para comenzar a usar TaskHive.</p>
 
       <form class="mt-7 space-y-4" (submit)="register(); $event.preventDefault();" novalidate>
