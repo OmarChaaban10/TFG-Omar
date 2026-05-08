@@ -3,10 +3,17 @@
   <nav class="flex items-center justify-between px-6 py-3 border-b th-nav">
     <div class="flex items-center space-x-4 lg:space-x-8">
       <div class="flex items-center space-x-2">
-        <button class="md:hidden text-slate-300 hover:text-white mr-2">
+        <button (click)="toggleMobileMenu()" class="md:hidden text-slate-300 hover:text-white mr-2 cursor-pointer"
+          type="button" aria-label="Abrir menú" [attr.aria-expanded]="mobileMenuOpen">
+          @if (!mobileMenuOpen) {
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
           </svg>
+          } @else {
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          }
         </button>
         <img src="taskhive_logo.png" class="w-10 h-12" alt="TaskHive Logo">
         <span class="font-bold text-lg th-text-heading tracking-wide hidden sm:inline-block">TaskHive</span>
@@ -65,6 +72,41 @@
       </div>
     </div>
   </nav>
+
+  @if (mobileMenuOpen) {
+  <div class="md:hidden border-b th-nav th-border px-4 py-3">
+    <nav class="space-y-2">
+      <button (click)="setView('dashboard')"
+        class="w-full rounded-md px-4 py-2.5 text-left text-sm font-medium transition cursor-pointer"
+        [class.bg-orange-500]="activeView === 'dashboard'" [class.text-white]="activeView === 'dashboard'"
+        [class.text-slate-400]="activeView !== 'dashboard'" [class.hover:text-white]="activeView !== 'dashboard'"
+        [class.hover:bg-slate-800/50]="activeView !== 'dashboard'">
+        Dashboard
+      </button>
+      <button (click)="setView('projects')"
+        class="w-full rounded-md px-4 py-2.5 text-left text-sm font-medium transition cursor-pointer"
+        [class.bg-orange-500]="activeView === 'projects'" [class.text-white]="activeView === 'projects'"
+        [class.text-slate-400]="activeView !== 'projects'" [class.hover:text-white]="activeView !== 'projects'"
+        [class.hover:bg-slate-800/50]="activeView !== 'projects'">
+        Proyectos
+      </button>
+      <button (click)="setView('members')"
+        class="w-full rounded-md px-4 py-2.5 text-left text-sm font-medium transition cursor-pointer"
+        [class.bg-orange-500]="activeView === 'members'" [class.text-white]="activeView === 'members'"
+        [class.text-slate-400]="activeView !== 'members'" [class.hover:text-white]="activeView !== 'members'"
+        [class.hover:bg-slate-800/50]="activeView !== 'members'">
+        Miembros
+      </button>
+      <button (click)="setView('reports')"
+        class="w-full rounded-md px-4 py-2.5 text-left text-sm font-medium transition cursor-pointer"
+        [class.bg-orange-500]="activeView === 'reports'" [class.text-white]="activeView === 'reports'"
+        [class.text-slate-400]="activeView !== 'reports'" [class.hover:text-white]="activeView !== 'reports'"
+        [class.hover:bg-slate-800/50]="activeView !== 'reports'">
+        Reportes
+      </button>
+    </nav>
+  </div>
+  }
 
   <!-- Cuerpo principal -->
   <div class="flex flex-col md:flex-row min-h-[calc(100vh-125px)]">

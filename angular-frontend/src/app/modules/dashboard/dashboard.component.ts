@@ -58,6 +58,7 @@ export class DashboardComponent implements OnInit {
   }
 
   dropdownOpen = false;
+  mobileMenuOpen = false;
 
   // View state
   activeView: 'dashboard' | 'projects' | 'members' | 'reports' = 'dashboard';
@@ -192,6 +193,10 @@ export class DashboardComponent implements OnInit {
     this.dropdownOpen = !this.dropdownOpen;
   }
 
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
+  }
+
   logout(): void {
     localStorage.removeItem('jwt_token');
     sessionStorage.removeItem('jwt_token');
@@ -200,6 +205,7 @@ export class DashboardComponent implements OnInit {
 
   setView(view: 'dashboard' | 'projects' | 'members' | 'reports'): void {
     this.activeView = view;
+    this.mobileMenuOpen = false;
   }
 
   openBoard(projectId: number, projectName = ''): void {

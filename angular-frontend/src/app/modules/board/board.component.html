@@ -74,10 +74,36 @@
         class="th-input w-full rounded-lg border py-2 pl-9 pr-4 text-sm outline-none transition-colors placeholder:text-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
     </div>
     
-    <!-- Badges UI (Solo estéticas por ahora) -->
-    <button class="flex-1 whitespace-nowrap rounded-lg bg-red-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-red-600 sm:flex-none sm:px-4">Alta prioridad</button>
-    <button class="flex-1 whitespace-nowrap rounded-lg bg-blue-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-blue-600 sm:flex-none sm:px-4">Mis tareas</button>
-    <button class="flex-1 whitespace-nowrap rounded-lg bg-emerald-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-600 sm:flex-none sm:px-4">Esta semana</button>
+    <button (click)="toggleFilter('highPriority')"
+      class="flex-1 whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-medium transition sm:flex-none sm:px-4"
+      [style.color]="isFilterActive('highPriority') ? '#ffffff' : null"
+      [class.bg-red-500]="isFilterActive('highPriority')" [class.text-white]="isFilterActive('highPriority')"
+      [class.border-red-500]="isFilterActive('highPriority')" [class.hover:bg-red-600]="isFilterActive('highPriority')"
+      [class.th-card]="!isFilterActive('highPriority')" [class.th-border]="!isFilterActive('highPriority')"
+      [class.text-slate-400]="!isFilterActive('highPriority')" [class.hover:text-white]="!isFilterActive('highPriority')"
+      [class.hover:bg-slate-800]="!isFilterActive('highPriority')">
+      Alta prioridad
+    </button>
+    <button (click)="toggleFilter('myTasks')"
+      class="flex-1 whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-medium transition sm:flex-none sm:px-4"
+      [style.color]="isFilterActive('myTasks') ? '#ffffff' : null"
+      [class.bg-blue-500]="isFilterActive('myTasks')" [class.text-white]="isFilterActive('myTasks')"
+      [class.border-blue-500]="isFilterActive('myTasks')" [class.hover:bg-blue-600]="isFilterActive('myTasks')"
+      [class.th-card]="!isFilterActive('myTasks')" [class.th-border]="!isFilterActive('myTasks')"
+      [class.text-slate-400]="!isFilterActive('myTasks')" [class.hover:text-white]="!isFilterActive('myTasks')"
+      [class.hover:bg-slate-800]="!isFilterActive('myTasks')">
+      Mis tareas
+    </button>
+    <button (click)="toggleFilter('thisWeek')"
+      class="flex-1 whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-medium transition sm:flex-none sm:px-4"
+      [style.color]="isFilterActive('thisWeek') ? '#ffffff' : null"
+      [class.bg-emerald-500]="isFilterActive('thisWeek')" [class.text-white]="isFilterActive('thisWeek')"
+      [class.border-emerald-500]="isFilterActive('thisWeek')" [class.hover:bg-emerald-600]="isFilterActive('thisWeek')"
+      [class.th-card]="!isFilterActive('thisWeek')" [class.th-border]="!isFilterActive('thisWeek')"
+      [class.text-slate-400]="!isFilterActive('thisWeek')" [class.hover:text-white]="!isFilterActive('thisWeek')"
+      [class.hover:bg-slate-800]="!isFilterActive('thisWeek')">
+      Esta semana
+    </button>
   </div>
 </div>
 

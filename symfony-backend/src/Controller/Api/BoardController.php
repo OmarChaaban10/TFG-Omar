@@ -117,7 +117,10 @@ class BoardController extends AbstractController
             ];
         }
 
-        return $this->json(['board' => $boardData]);
+        return $this->json([
+            'board' => $boardData,
+            'currentUserId' => $user->getId(),
+        ]);
     }
 
     #[Route('/cards/{cardId}/move', name: 'move_card', methods: ['PUT'])]

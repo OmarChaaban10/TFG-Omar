@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs/operators';
-import { DragDropModule, CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ThemeToggleComponent } from '../shared/theme-toggle/theme-toggle.component';
@@ -23,7 +23,7 @@ export interface Assignee {
 export interface Card {
   id: number;
   title: string;
-  description: string;
+  description: string | null;
   priority: string | null;
   position: number;
   dueDate: string | null;
@@ -45,6 +45,13 @@ export interface Board {
   columns: BoardColumn[];
 }
 
+interface BoardResponse {
+  board: Board;
+  currentUserId: number;
+}
+
+type BoardFilter = 'highPriority' | 'myTasks' | 'thisWeek';
+
 @Component({
   selector: 'app-board',
   standalone: true,
@@ -55,9 +62,15 @@ export class BoardComponent implements OnInit {
   projectId = 0;
   projectName = '';
   board: Board | null = null;
+  currentUserId: number | null = null;
   isLoading = false;
   error = '';
   searchQuery = '';
+  activeFilters: Record<BoardFilter, boolean> = {
+    highPriority: false,
+    myTasks: false,
+    thisWeek: false,
+  };
   
   // Para los id de las listas conectadas de drag & drop
   connectedLists: string[] = [];
@@ -112,7 +125,7 @@ export class BoardComponent implements OnInit {
 
     const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
 
-    this.http.get<{ board: Board }>(`/api/projects/${this.projectId}/board`, {
+    this.http.get<BoardResponse>(`/api/projects/${this.projectId}/board`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .pipe(
@@ -122,6 +135,7 @@ export class BoardComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.board = res.board;
+          this.currentUserId = res.currentUserId;
           if (!this.projectName) {
             this.projectName = res.board.name;
           }
@@ -147,20 +161,60 @@ export class BoardComponent implements OnInit {
   }
 
   drop(event: CdkDragDrop<Card[]>): void {
-    if (event.previousContainer === event.container) {
-      // Movimiento dentro de la misma columna
-      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
-      this.persistCardMove(event.container.id, event.item.data.id, event.currentIndex);
-    } else {
-      // Movimiento a otra columna
-      transferArrayItem(
-        event.previousContainer.data,
-        event.container.data,
-        event.previousIndex,
-        event.currentIndex,
-      );
-      this.persistCardMove(event.container.id, event.item.data.id, event.currentIndex);
+    if (!this.board) return;
+
+    const cardId = event.item.data.id;
+    const sourceColumn = this.findColumnByContainerId(event.previousContainer.id);
+    const targetColumn = this.findColumnByContainerId(event.container.id);
+
+    if (!sourceColumn || !targetColumn) return;
+
+    const sourceIndex = sourceColumn.cards.findIndex(card => card.id === cardId);
+    if (sourceIndex === -1) return;
+
+    const [movedCard] = sourceColumn.cards.splice(sourceIndex, 1);
+    const targetIndex = this.getTargetInsertIndex(targetColumn, cardId, event.currentIndex);
+    targetColumn.cards.splice(targetIndex, 0, movedCard);
+
+    this.reindexColumn(sourceColumn);
+    if (sourceColumn !== targetColumn) {
+      this.reindexColumn(targetColumn);
     }
+
+    this.persistCardMove(event.container.id, cardId, targetIndex);
+  }
+
+  private findColumnByContainerId(containerId: string): BoardColumn | undefined {
+    const columnId = parseInt(containerId.replace('col-', ''), 10);
+    return this.board?.columns.find(column => column.id === columnId);
+  }
+
+  private getTargetInsertIndex(targetColumn: BoardColumn, movedCardId: number, visibleTargetIndex: number): number {
+    const query = this.searchQuery.toLowerCase().trim();
+    const visibleCards = targetColumn.cards.filter(card =>
+      card.id !== movedCardId && this.matchesActiveFilters(card, query)
+    );
+
+    if (visibleCards.length === 0) {
+      return targetColumn.cards.length;
+    }
+
+    if (visibleTargetIndex <= 0) {
+      return targetColumn.cards.findIndex(card => card.id === visibleCards[0].id);
+    }
+
+    if (visibleTargetIndex >= visibleCards.length) {
+      const lastVisibleCardIndex = targetColumn.cards.findIndex(card => card.id === visibleCards[visibleCards.length - 1].id);
+      return lastVisibleCardIndex + 1;
+    }
+
+    return targetColumn.cards.findIndex(card => card.id === visibleCards[visibleTargetIndex].id);
+  }
+
+  private reindexColumn(column: BoardColumn): void {
+    column.cards.forEach((card, index) => {
+      card.position = index;
+    });
   }
 
   private persistCardMove(columnContainerId: string, cardId: number, newPosition: number): void {
@@ -178,7 +232,7 @@ export class BoardComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al mover la tarjeta', err);
-        // Idealmente aquí se podría revertir la UI o mostrar un toast
+        this.fetchBoard();
       }
     });
   }
@@ -207,19 +261,72 @@ export class BoardComponent implements OnInit {
     }
   }
 
+  toggleFilter(filter: BoardFilter): void {
+    this.activeFilters[filter] = !this.activeFilters[filter];
+  }
+
+  isFilterActive(filter: BoardFilter): boolean {
+    return this.activeFilters[filter];
+  }
+
+  private matchesActiveFilters(card: Card, query: string): boolean {
+    if (query && !this.matchesSearch(card, query)) {
+      return false;
+    }
+
+    if (this.activeFilters.highPriority && !['high', 'urgent'].includes(card.priority ?? '')) {
+      return false;
+    }
+
+    if (this.activeFilters.myTasks && card.assignee?.id !== this.currentUserId) {
+      return false;
+    }
+
+    if (this.activeFilters.thisWeek && !this.isDueThisWeek(card.dueDate)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private matchesSearch(card: Card, query: string): boolean {
+    return card.title.toLowerCase().includes(query)
+      || (card.description?.toLowerCase().includes(query) ?? false)
+      || card.assignee?.name.toLowerCase().includes(query)
+      || card.labels.some(label => label.name.toLowerCase().includes(query));
+  }
+
+  private isDueThisWeek(dueDate: string | null): boolean {
+    if (!dueDate) return false;
+
+    const date = new Date(dueDate);
+    if (Number.isNaN(date.getTime())) return false;
+
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    const day = startOfWeek.getDay();
+    const daysFromMonday = day === 0 ? 6 : day - 1;
+    startOfWeek.setDate(startOfWeek.getDate() - daysFromMonday);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    return date >= startOfWeek && date <= endOfWeek;
+  }
+
   get filteredColumns(): BoardColumn[] {
     if (!this.board) return [];
     
     const query = this.searchQuery.toLowerCase().trim();
-    if (!query) return this.board.columns;
+    const hasFilters = this.activeFilters.highPriority || this.activeFilters.myTasks || this.activeFilters.thisWeek;
+    if (!query && !hasFilters) return this.board.columns;
     
     // Clonación profunda básica para no alterar la matriz real con el filtro
     return this.board.columns.map(col => ({
       ...col,
-      cards: col.cards.filter(c => 
-        c.title.toLowerCase().includes(query) || 
-        c.assignee?.name.toLowerCase().includes(query)
-      )
+      cards: col.cards.filter(c => this.matchesActiveFilters(c, query))
     }));
   }
 }
