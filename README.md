@@ -1,20 +1,23 @@
-# Onboarding DAW - Gestor de Tareas
+# TaskHive - Gestor de Tareas Avanzado
 
-**Omar Chaaban**
+**Autor:** Omar Mounder Chaaban Yaber  
+**Proyecto:** Trabajo de Fin de Grado (TFG) - 2º Año de Desarrollo de Aplicaciones Web (DAW)
 
-Una aplicación web completa de gestión de tareas con login y panel de administración. Sistema de autenticación con JWT, roles de usuario y gestión de base de datos relacional.
+**TaskHive** es una aplicación web completa y moderna para la gestión de proyectos y tareas, diseñada con un enfoque profesional, interactivo y centrado en la experiencia de usuario. Cuenta con autenticación segura, modos claro/oscuro, paneles de administración, sistema de reportes en tiempo real y asignación dinámica de roles.
 
-## Stack Tecnológico
+---
+
+## 🚀 Stack Tecnológico
 
 **Frontend:**
-- Angular 21
-- Tailwind CSS 4
-- TypeScript 5
+- **Framework:** Angular 21
+- **Estilos:** Tailwind CSS 4
+- **Lenguaje:** TypeScript 5
 
 **Backend:**
-- Symfony 7
-- PHP 8.3
-- JWT (autenticación)
+- **Framework:** Symfony 7
+- **Lenguaje:** PHP 8.3
+- **Seguridad:** JWT (JSON Web Tokens) para autenticación
 
 **Base de Datos:**
 - PostgreSQL 17
@@ -22,61 +25,56 @@ Una aplicación web completa de gestión de tareas con login y panel de administ
 **Containerización:**
 - Docker & Docker Compose
 
-## Características
+---
 
-- ✅ Autenticación con JWT
-- ✅ Gestión de usuarios y roles
-- ✅ Gestor de tareas completo
-- ✅ Panel de administración
-- ✅ API RESTful
-- ✅ Desplegable con Docker Compose
+## ✨ Características Principales
+
+- ✅ **Autenticación Segura:** Sistema de login y registro protegido con JWT.
+- ✅ **Gestión de Usuarios y Roles:** Control de permisos de acceso (Propietario, Admin, Gestor, Miembro).
+- ✅ **Gestor de Proyectos y Tareas:** Organización visual de tareas, asignación a miembros e indicadores de progreso.
+- ✅ **Auditoría y Reportes:** Sistema de logs automático que registra las actividades clave en cada proyecto.
+- ✅ **Diseño Premium UI/UX:** Interfaz interactiva y completamente adaptativa, con soporte nativo para Tema Claro y Tema Oscuro.
+- ✅ **API RESTful:** Backend robusto y estructurado.
+- ✅ **Despliegue Rápido:** Listo para levantar en segundos gracias a Docker Compose.
 
 ---
 
-## Opciones de ejecución
+## ⚙️ Opciones de Ejecución
 
-- `Docker Compose`: empaqueta frontend, backend y base de datos en contenedores. Es la forma más rápida de ver la aplicación funcionando sin instalar dependencias de desarrollo.
-- `Entorno local`: instala Node.js, Angular CLI, PHP y Composer para poder ejecutar y depurar cada proyecto desde tu terminal. Útil para desarrollo diario o prácticas donde necesites modificar código y usar herramientas locales.
+Existen dos maneras de levantar TaskHive:
+- **`Docker Compose`:** Empaqueta frontend, backend y base de datos en contenedores. Es la forma más rápida de ver la aplicación funcionando sin instalar dependencias de desarrollo.
+- **`Entorno Local`:** Instala Node.js, Angular CLI, PHP y Composer para poder ejecutar y depurar cada proyecto directamente desde tu terminal. Útil para desarrollo diario o prácticas donde necesites modificar el código y usar herramientas locales.
 
 ---
 
-## Guía rápida si empiezas de cero
+## 🛠️ Guía rápida (Entorno Local desde Cero)
 
 ### 1. Instala las herramientas base
 
 1. **Git**  
    - Descarga desde [git-scm.com](https://git-scm.com/downloads) y acepta la instalación por defecto.
-   - Asegúrate de haber seguido los primeros pasos de configuración del campus antes de empezar este onboarding (Dualboot o MacOs instalaciones básicas y clave SSH configurada): https://campus-codearts.com/course/section.php?id=175
-   - Si estás en Ubuntu recién instalado, actualiza primero los paquetes y añade utilidades básicas:  
+   - En Linux (Ubuntu/Debian):  
      ```bash
      sudo apt update
      sudo apt install curl git build-essential -y
      ```
 
 2. **Node.js + npm (Angular necesita Node 20.19 o 22.x)**  
-   - Recomendado: instala [nvm](https://github.com/nvm-sh/nvm#installing-and-updating) y luego ejecuta:  
+   - Se recomienda instalar [nvm](https://github.com/nvm-sh/nvm#installing-and-updating) y ejecutar:  
      ```bash
      nvm install 22
      nvm use 22
      ```  
-   - Comprueba que todo está correcto: `node -v` debería mostrar `v22.x`, `npm -v` debería estar en la rama 10 u 11.
-    - Si estás en un contenedor/VM sin `nvm`, usa el repositorio oficial de NodeSource:  
-      ```bash
-      curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-      sudo apt install nodejs -y
-      node -v
-      npm -v
-      ```
+   - Comprueba que todo está correcto: `node -v` debería mostrar `v22.x`.
 
-3. **Angular CLI** (para `ng serve`)  
+3. **Angular CLI**  
    ```bash
    npm install -g @angular/cli@20
    ng version
    ```
-   Verás la versión instalada y podrás usar `ng` en cualquier carpeta.
 
-4. **PHP 8.3 + Composer** (necesario para Symfony)  
-   - Linux (Debian/Ubuntu):  
+4. **PHP 8.3 + Composer** (Para el Backend)  
+   - En Linux (Debian/Ubuntu):  
      ```bash
      sudo apt update
      sudo apt install php8.3-cli php8.3-common php8.3-xml php8.3-intl php8.3-mbstring php8.3-zip php8.3-pgsql unzip curl -y
@@ -91,10 +89,9 @@ Una aplicación web completa de gestión de tareas con login y panel de administ
    mv ~/.symfony*/bin/symfony /usr/local/bin/symfony  # añade sudo si no eres root
    symfony version
    ```
-   - Más opciones de instalación en [symfony.com/download](https://symfony.com/download).
 
-6. **Docker Desktop** .  
-   - [docs.docker.com/get-docker](https://docs.docker.com/desktop/setup/install/linux/debian/#install-docker-desktop)
+6. **Docker Desktop** (Para levantar la base de datos fácilmente).  
+   - Instalación: [docs.docker.com/get-docker](https://docs.docker.com/desktop/setup/install/linux/debian/#install-docker-desktop)
 
 ---
 
@@ -102,149 +99,84 @@ Una aplicación web completa de gestión de tareas con login y panel de administ
 
 ```bash
 git clone <URL_REPOSITORIO>
-cd <REPOSITORIO>
+cd tfg-omar
 ```
-
-Para obtener la Url del repo, entra al mismo en GitLab y copia la Url del desplegable Code y copia la url destinada a SSH.
 
 ---
 
-### 3. Arranca el backend (Symfony) desde la terminal
+### 3. Instala las dependencias y prepara PostgreSQL
 
+Levanta únicamente el contenedor de la base de datos (PostgreSQL):
+```bash
+docker compose up db -d
+```
+
+Prepara el **Backend**:
 ```bash
 cd symfony-backend
 composer install
-symfony server:start --no-tls --port=8000
+php bin/console doctrine:migrations:migrate --no-interaction
 ```
 
-> Sin Symfony CLI usa `php -S 127.0.0.1:8000 -t public`. Asegúrate de tener PostgreSQL corriendo por Docker antes de iniciar.
+> **Datos Demo (Opcional):** Si deseas cargar datos de prueba para ver el tablero funcionando rápidamente:
+> ```bash
+> php bin/console app:seed:demo
+> ```
 
----
-
-### 4. Instala dependencias del frontend
-
+Prepara el **Frontend**:
 ```bash
 cd ../angular-frontend
 npm install
 ```
 
-- Verifica que `node -v` devuelve 22.x. Si no, vuelve al paso 1 y selecciona la versión correcta con `nvm use 22`.
-
 ---
 
-### 5. Decide cómo gestionar PostgreSQL
+### 4. Arranca los servidores locales
 
-- **Opción rápida:** usa Docker solo para la base de datos
-  ```bash
-  docker compose up db -d
-  ```
-
-Comprueba que la base está en marcha antes de levantar el backend.
-
----
-
-### 6. Arranca el backend en local
-
+**Levantar Backend:**
+En una terminal nueva, sitúate en `symfony-backend` y ejecuta:
 ```bash
-cd symfony-backend
 symfony server:start --no-tls --port=8000
 ```
+*(Accede a http://localhost:8000 para verificar que la API responde).*
 
-- Sin Symfony CLI:  
-  ```bash
-  php -S 127.0.0.1:8000 -t public
-  ```
-- Accede a `http://localhost:8000` para ver si el backend responde.
-- Para detenerlo: `symfony server:stop` o `Ctrl+C` en la terminal.
-
-### 6.1 Carga datos demo (seeder)
-
-Con la base de datos y el backend en marcha, puedes cargar datos iniciales para probar rapido el tablero:
-
+**Levantar Frontend:**
+En otra terminal, sitúate en `angular-frontend` y ejecuta:
 ```bash
-cd symfony-backend
-php bin/console app:seed:demo
+ng serve
 ```
-
-El seeder es idempotente: puedes ejecutarlo varias veces sin duplicar el proyecto principal.
-
-Si quieres limpiar esos datos demo y dejarlos desde cero:
-
-```bash
-cd symfony-backend
-php bin/console app:seed:reset
-php bin/console app:seed:demo
-```
+Abre [http://localhost:4200](http://localhost:4200) y verás la interfaz de TaskHive lista para usar.
 
 ---
 
-### 7. Arranca el frontend en local
+## 🐳 Ejecución Completa con Docker Compose (Vía Rápida)
 
-```bash
-cd angular-frontend
-ng serve 
-```
-
-- `ng serve` recompila en caliente; deja ese terminal abierto durante el desarrollo.
-- Abre [http://localhost:4200](http://localhost:4200) y verifica que la UI se conecta al backend.
-
-Para detener el frontend, usa `Ctrl+C`.
-
----
-
-### 8. Resumen de por qué hacerlo en local
-
-- Practicas el uso de la terminal (`git`, `npm`, `composer`, `symfony`) y entiendes mejor qué hace cada comando.
-- Puedes depurar con las herramientas habituales de tu editor/IDE.
-- Controlas versiones concretas (Node 22, Angular CLI 20, PHP 8.3) iguales a las del entorno Docker, evitando sorpresas.
-
----
-
-## Ejecución completa con Docker Compose
-
-Si prefieres no instalar dependencias, puedes levantar todo el stack con Docker.
-
-### Requisitos
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
+Si prefieres no instalar PHP ni Node.js en tu máquina, puedes levantar todo el stack directamente con Docker.
 
 ### Pasos
-1. Desde la raíz del proyecto:
+1. Desde la raíz del proyecto (donde se encuentra `docker-compose.yml`):
    ```bash
    docker compose up -d
    ```
-2. Verifica contenedores en ejecución:
+2. Verifica que los tres contenedores (**symfony_backend**, **angular_frontend** y **symfony_postgres**) están corriendo:
    ```bash
    docker ps
    ```
-   Deberías ver tres contenedores: **symfony_backend**, **angular_frontend** y **symfony_postgres**.
-3. Accede a:
-   - Frontend: [http://localhost:4200](http://localhost:4200)
-   - Backend: [http://localhost:8000](http://localhost:8000)
-   - PostgreSQL: puerto `5432` (usuario `symfony`, password `password`).
+3. ¡Listo! Accede a:
+   - **Frontend UI:** [http://localhost:4200](http://localhost:4200)
+   - **Backend API:** [http://localhost:8000](http://localhost:8000)
 
-### Gestión de contenedores
-- Parar todo: `docker compose down`
-- Parar y borrar volúmenes (elimina datos base de datos): `docker compose down -v`
-- Ver logs en tiempo real: `docker compose logs -f backend frontend db`
+### Comandos Útiles de Docker
+- Parar todo el stack: `docker compose down`
+- Parar y resetear base de datos: `docker compose down -v`
+- Ver logs en vivo: `docker compose logs -f`
 
 ---
 
-## Preguntas frecuentes
+## ❓ Preguntas Frecuentes
 
 - **¿Por qué insistimos en la versión exacta de Node y PHP?**  
-  Angular 20 requiere Node >= 20.19 o 22.x. Symfony 7.3 aprovecha funcionalidades de PHP 8.3, por lo que versiones anteriores pueden fallar.
-
-- **¿Qué hago si `ng serve` pide permisos?**  
-  Ajusta la propiedad de la carpeta a tu usuario con `sudo chown -R $USER:$USER /ruta/al/proyecto` y evita usar `sudo npm install` en Linux/Mac.
-
-- **Docker dice que los puertos están en uso**  
-  Ejecuta los contenedores con Docker Desktop y `docker compose up`, nunca con `sudo docker compose up`, porque crea recursos fuera del contexto de tu usuario. Si ya lo hiciste:
-  1. Cierra todo con `sudo docker compose down` y luego `docker compose down`.
-  2. Si los puertos 8000/4200/5432 siguen ocupados, busca los procesos con `lsof -i :8000` (cambia el puerto según corresponda) y elimina el PID problemático con `kill PID` o `kill -9 PID`.
-
----
-
-Ahora ya sabes cómo preparar tu entorno desde cero, ejecutar la aplicación en local para desarrollo y levantar todo con Docker cuando quieras validar el despliegue completo.
-
-Habiendo seguido estos pasos en tu máquina, ya puedes empezar a trabajar en los ejercicios de onboarding que están marcados en la tabla de issues del repositorio.
+  Angular requiere Node >= 20.19 o 22.x. Symfony aprovecha funcionalidades exclusivas de PHP 8.3, por lo que versiones anteriores fallarán.
+  
+- **Docker me dice que los puertos están en uso**  
+  Cierra todo primero usando `docker compose down`. Si los puertos 8000/4200/5432 siguen ocupados por otros procesos, localízalos en tu sistema (`lsof -i :8000`) y detenlos manualmente.
