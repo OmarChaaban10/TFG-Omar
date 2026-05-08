@@ -131,9 +131,17 @@
       </div>
 
       <!-- Project meta -->
-      <div class="px-5 py-3 border-t border-slate-700/50 flex items-center gap-6 text-xs text-slate-500">
-        <span>Creado: {{ project.createdAt }}</span>
-        <span>Tareas: {{ project.doneTasks }}/{{ project.totalTasks }}</span>
+      <div class="px-5 py-3 border-t border-slate-700/50 flex items-center justify-between text-xs text-slate-500">
+        <div class="flex items-center gap-6">
+          <span>Creado: {{ project.createdAt }}</span>
+          <span>Tareas: {{ project.doneTasks }}/{{ project.totalTasks }}</span>
+        </div>
+        <button (click)="openBoard(project.id, project.name)" class="flex items-center gap-1.5 text-blue-400 hover:text-blue-300 font-medium transition cursor-pointer">
+          Ver Tablero
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        </button>
       </div>
     </div>
     }

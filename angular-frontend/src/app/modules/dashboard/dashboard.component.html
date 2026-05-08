@@ -248,7 +248,7 @@
               <div class="flex items-center justify-end w-full md:w-auto gap-4 md:gap-6 mt-3 md:mt-0">
                 <span class="text-sm font-bold" [ngClass]="getTextProgressClass(project.progress)">{{ project.progress
                   }}%</span>
-                <button
+                <button (click)="openBoard(project.id, project.name)"
                   class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded text-sm font-bold transition flex items-center gap-2 shadow-lg shadow-orange-500/20 cursor-pointer">
                   Abrir
                 </button>
@@ -303,7 +303,7 @@
             <div class="flex items-center justify-end w-full md:w-auto gap-4 md:gap-6 mt-3 md:mt-0">
               <span class="text-sm font-bold" [ngClass]="getTextProgressClass(project.progress)">{{ project.progress
                 }}%</span>
-              <button
+              <button (click)="openBoard(project.id, project.name)"
                 class="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded text-sm font-bold transition flex items-center gap-2 shadow-lg shadow-orange-500/20 cursor-pointer">
                 Abrir
               </button>
@@ -337,7 +337,8 @@
 
       <!-- ===== VISTA: PROYECTOS ===== -->
       @if (activeView === 'projects') {
-      <app-projects (requestCreateProject)="openCreateModal()"></app-projects>
+      <app-projects (requestCreateProject)="openCreateModal()" (requestOpenBoard)="openBoard($event.id, $event.name)">
+      </app-projects>
       }
 
       <!-- ===== VISTA: MIEMBROS ===== -->

@@ -1,4 +1,4 @@
-import { Component, OnInit, DestroyRef, inject, HostListener } from '@angular/core';
+import { Component, OnInit, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -192,14 +192,6 @@ export class DashboardComponent implements OnInit {
     this.dropdownOpen = !this.dropdownOpen;
   }
 
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    const target = event.target as HTMLElement;
-    if (!target.closest('#user-menu-container')) {
-      this.dropdownOpen = false;
-    }
-  }
-
   logout(): void {
     localStorage.removeItem('jwt_token');
     sessionStorage.removeItem('jwt_token');
@@ -208,6 +200,12 @@ export class DashboardComponent implements OnInit {
 
   setView(view: 'dashboard' | 'projects' | 'members' | 'reports'): void {
     this.activeView = view;
+  }
+
+  openBoard(projectId: number, projectName = ''): void {
+    this.router.navigate(['/board', projectId], {
+      queryParams: projectName ? { name: projectName } : undefined,
+    });
   }
 
   openCreateModal(): void {

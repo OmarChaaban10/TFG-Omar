@@ -3,6 +3,7 @@ import { LoginComponent } from './modules/landing/login/login.component';
 import { ForgotPasswordComponent } from './modules/landing/forgot-password/forgot-password.component';
 import { RegisterComponent } from './modules/landing/register/register.component';
 import { DashboardComponent } from './modules/dashboard/dashboard.component';
+import { BoardComponent } from './modules/board/board.component';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 
@@ -25,6 +26,16 @@ export const routes: Routes = [
 	{
 		path: 'dashboard',
 		component: DashboardComponent,
+		canActivate: [authGuard]
+	},
+	{
+		path: 'board/:id',
+		component: BoardComponent,
+		canActivate: [authGuard]
+	},
+	{
+		path: 'board/:id/:name',
+		component: BoardComponent,
 		canActivate: [authGuard]
 	}
 ];

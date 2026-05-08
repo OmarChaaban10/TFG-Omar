@@ -33,6 +33,7 @@ interface ProjectFull {
 })
 export class ProjectsComponent implements OnInit {
   @Output() requestCreateProject = new EventEmitter<void>();
+  @Output() requestOpenBoard = new EventEmitter<{id: number, name: string}>();
 
   allProjects: ProjectFull[] = [];
   isLoadingProjects = false;
@@ -67,6 +68,13 @@ export class ProjectsComponent implements OnInit {
           this.projectsError = 'No se pudieron cargar los proyectos.';
         }
       });
+  }
+  openCreateModal(): void {
+    this.requestCreateProject.emit();
+  }
+
+  openBoard(id: number, name: string): void {
+    this.requestOpenBoard.emit({ id, name });
   }
 
   toggleProjectExpand(projectId: number): void {
@@ -119,7 +127,4 @@ export class ProjectsComponent implements OnInit {
     return 'text-emerald-500';
   }
 
-  openCreateModal(): void {
-    this.requestCreateProject.emit();
-  }
 }

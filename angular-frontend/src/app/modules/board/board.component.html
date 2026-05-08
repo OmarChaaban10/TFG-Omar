@@ -1,0 +1,188 @@
+<div class="min-h-screen th-page">
+  <nav class="flex items-center justify-between gap-3 px-4 py-3 border-b th-nav sm:px-6">
+    <div class="flex min-w-0 items-center gap-2 sm:gap-4">
+      <button (click)="backToDashboard()"
+        class="flex items-center gap-2 text-slate-400 hover:text-white text-sm font-medium transition cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+        Dashboard
+      </button>
+      <div class="hidden sm:flex items-center gap-2 border-l th-border pl-4">
+        <img src="taskhive_logo.png" class="w-10 h-12" alt="TaskHive Logo">
+        <span class="font-bold text-lg th-text-heading tracking-wide">TaskHive</span>
+      </div>
+    </div>
+
+    <div class="flex shrink-0 items-center gap-2 sm:gap-3">
+      <app-theme-toggle></app-theme-toggle>
+      <button (click)="logout()"
+        class="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-slate-800 rounded-md transition cursor-pointer">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1" />
+        </svg>
+        <span class="hidden sm:inline">Cerrar sesión</span>
+      </button>
+    </div>
+  </nav>
+
+  <main class="p-3 th-body min-h-[calc(100vh-73px)] overflow-x-hidden sm:p-4 md:p-8">
+@if (!projectId) {
+<div class="flex flex-col items-center justify-center h-[60vh] text-center">
+  <div class="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mb-4 border border-slate-700/50 text-slate-400">
+    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+    </svg>
+  </div>
+  <h2 class="text-xl font-bold text-white mb-2">Ningún proyecto seleccionado</h2>
+  <p class="text-slate-400 max-w-sm">Ve a la sección de Proyectos y selecciona un tablero para empezar a organizar tus tareas.</p>
+</div>
+} @else {
+
+<!-- Header del Tablero -->
+<div class="mb-6">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div class="min-w-0">
+      <h2 class="break-words text-xl font-bold text-white tracking-wide font-ui sm:text-2xl">{{ boardTitle }}</h2>
+      <p class="text-slate-400 mt-1 flex flex-wrap items-center gap-2 text-sm sm:text-base">
+        <span>Tablero principal</span>
+        <span class="w-1 h-1 bg-slate-600 rounded-full"></span>
+        <span>{{ board?.columns?.length || 0 }} columnas</span>
+      </p>
+    </div>
+    <div class="w-full sm:w-auto">
+      <!-- Botón de añadir columna (Solo UI para esta iteracion) -->
+      <button class="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600 sm:w-auto">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        Nueva columna
+      </button>
+    </div>
+  </div>
+
+  <!-- Barra de Filtros -->
+  <div class="mt-6 flex flex-wrap items-stretch gap-3 sm:items-center">
+    <div class="relative w-full sm:w-72">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+      <input type="text" [(ngModel)]="searchQuery" placeholder="Buscar tarea..." 
+        class="th-input w-full rounded-lg border py-2 pl-9 pr-4 text-sm outline-none transition-colors placeholder:text-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+    </div>
+    
+    <!-- Badges UI (Solo estéticas por ahora) -->
+    <button class="flex-1 whitespace-nowrap rounded-lg bg-red-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-red-600 sm:flex-none sm:px-4">Alta prioridad</button>
+    <button class="flex-1 whitespace-nowrap rounded-lg bg-blue-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-blue-600 sm:flex-none sm:px-4">Mis tareas</button>
+    <button class="flex-1 whitespace-nowrap rounded-lg bg-emerald-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-600 sm:flex-none sm:px-4">Esta semana</button>
+  </div>
+</div>
+
+<!-- Errors & Loading -->
+@if (error) {
+<div class="mb-6 flex items-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg px-4 py-3">
+  <span>{{ error }}</span>
+</div>
+}
+
+@if (isLoading) {
+<div class="flex items-center justify-center h-64">
+  <div class="w-10 h-10 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin"></div>
+</div>
+}
+
+<!-- Área del Tablero Kanban -->
+@if (board && !isLoading) {
+<div class="w-full overflow-x-visible pb-6 pt-2 md:overflow-x-auto">
+<div class="mx-auto flex w-full flex-col gap-4 px-0 md:w-max md:flex-row md:gap-6 md:px-1 md:snap-x" cdkDropListGroup>
+  
+  @for (column of filteredColumns; track column.id) {
+  <div class="th-card th-border flex w-full flex-shrink-0 flex-col rounded-xl border md:w-80 md:snap-center md:max-h-[calc(100vh-250px)]">
+    
+    <!-- Cabecera de la columna -->
+    <div class="th-card th-border top-0 z-10 flex items-center justify-between rounded-t-xl border-b px-4 py-3 md:sticky">
+      <div class="flex min-w-0 items-center gap-2">
+        <!-- Punto de color de la columna -->
+        <span class="h-2.5 w-2.5 shrink-0 rounded-full" [style.backgroundColor]="column.color"></span>
+        <h3 class="truncate font-semibold text-slate-200 text-[15px] tracking-wide">{{ column.name }}</h3>
+      </div>
+      <div class="bg-slate-800 text-slate-400 text-xs font-bold px-2 py-0.5 rounded-md border border-slate-700/50">
+        {{ column.cards.length }}
+      </div>
+    </div>
+
+    <!-- Lista arrastrable de tarjetas -->
+    <div 
+      class="min-h-30 flex-1 space-y-3 overflow-visible p-3 md:min-h-37.5 md:overflow-y-auto"
+      [id]="'col-' + column.id"
+      cdkDropList
+      [cdkDropListData]="column.cards"
+      [cdkDropListConnectedTo]="connectedLists"
+      (cdkDropListDropped)="drop($event)">
+      
+      @for (card of column.cards; track card.id) {
+      <div 
+        cdkDrag
+        [cdkDragData]="card"
+        class="th-card-alt th-border group relative cursor-grab rounded-lg border p-3.5 shadow-sm transition-colors hover:bg-slate-800/50 active:cursor-grabbing">
+        
+        <!-- Drop placeholder (CDK lo usa internamente) -->
+        <div *cdkDragPlaceholder class="bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-lg min-h-[100px] opacity-50"></div>
+
+        <p class="mb-3 wrap-break-words text-sm font-semibold leading-snug text-slate-200">{{ card.title }}</p>
+        
+        <!-- Prioridad y Asignado -->
+        <div class="flex items-center justify-between mt-auto">
+          <div class="flex items-center gap-2">
+            @if (card.priority) {
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider" [ngClass]="getPriorityColor(card.priority)">
+              {{ getPriorityLabel(card.priority) }}
+            </span>
+            }
+          </div>
+
+          @if (card.assignee) {
+            @if (card.assignee.avatarUrl) {
+              <img [src]="card.assignee.avatarUrl" [alt]="card.assignee.name" class="w-6 h-6 rounded-full object-cover ring-2 ring-[var(--bg-card-alt)]">
+            } @else {
+              <div class="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30 text-blue-400 text-[10px] font-bold ring-2 ring-[var(--bg-card-alt)]">
+                {{ card.assignee.name.substring(0, 2).toUpperCase() }}
+              </div>
+            }
+          }
+        </div>
+
+        <!-- Fecha -->
+        @if (card.dueDate) {
+        <div class="mt-3 flex items-center gap-1.5 text-xs text-slate-400">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span>{{ card.dueDate | date:'mediumDate' }}</span>
+        </div>
+        }
+      </div>
+      }
+    </div>
+
+    <!-- Botón añadir tarjeta rápido -->
+    <div class="th-card th-border rounded-b-xl border-t p-2">
+      <button class="w-full flex items-center gap-2 px-2 py-1.5 text-sm text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 rounded-md transition cursor-pointer text-left">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        Añadir tarjeta
+      </button>
+    </div>
+  </div>
+  }
+
+</div>
+</div>
+}
+}
+  </main>
+</div>
