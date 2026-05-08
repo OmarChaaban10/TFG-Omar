@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controller\Api;
 
+use App\Entity\Board;
+use App\Entity\BoardColumn;
 use App\Entity\Project;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
@@ -61,6 +63,8 @@ class ProjectController extends AbstractController
             $project->setColor($color);
         }
 
+        $this->createDefaultBoard($project);
+
         $this->em->persist($project);
         $this->em->flush();
 
@@ -75,6 +79,34 @@ class ProjectController extends AbstractController
                 'color' => $project->getColor(),
             ],
         ], Response::HTTP_CREATED);
+    }
+
+    private function createDefaultBoard(Project $project): Board
+    {
+        $board = (new Board())
+            ->setProject($project)
+            ->setName('Tablero Principal');
+
+        $columns = [
+            ['name' => 'Por hacer', 'position' => 1, 'color' => '#E2E8F0'],
+            ['name' => 'En progreso', 'position' => 2, 'color' => '#FDE68A'],
+            ['name' => 'En revisión', 'position' => 3, 'color' => '#BFDBFE'],
+            ['name' => 'Hecho', 'position' => 4, 'color' => '#BBF7D0'],
+        ];
+
+        foreach ($columns as $columnData) {
+            $column = (new BoardColumn())
+                ->setBoard($board)
+                ->setName($columnData['name'])
+                ->setPosition($columnData['position'])
+                ->setColor($columnData['color']);
+
+            $this->em->persist($column);
+        }
+
+        $this->em->persist($board);
+
+        return $board;
     }
 
     #[Route('/search', name: 'search', methods: ['GET'])]

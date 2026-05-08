@@ -44,7 +44,7 @@
 <div class="mb-6">
   <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
     <div class="min-w-0">
-      <h2 class="break-words text-xl font-bold text-white tracking-wide font-ui sm:text-2xl">{{ boardTitle }}</h2>
+      <h2 class="wrap-break-words text-xl font-bold text-white tracking-wide font-ui sm:text-2xl">{{ boardTitle }}</h2>
       <p class="text-slate-400 mt-1 flex flex-wrap items-center gap-2 text-sm sm:text-base">
         <span>Tablero principal</span>
         <span class="w-1 h-1 bg-slate-600 rounded-full"></span>
@@ -53,7 +53,7 @@
     </div>
     <div class="w-full sm:w-auto">
       <!-- Botón de añadir columna (Solo UI para esta iteracion) -->
-      <button class="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600 sm:w-auto">
+      <button class="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600 sm:w-auto cursor-pointer">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
@@ -75,7 +75,7 @@
     </div>
     
     <button (click)="toggleFilter('highPriority')"
-      class="flex-1 whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-medium transition sm:flex-none sm:px-4"
+      class="flex-1 whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-medium transition sm:flex-none sm:px-4 cursor-pointer"
       [style.color]="isFilterActive('highPriority') ? '#ffffff' : null"
       [class.bg-red-500]="isFilterActive('highPriority')" [class.text-white]="isFilterActive('highPriority')"
       [class.border-red-500]="isFilterActive('highPriority')" [class.hover:bg-red-600]="isFilterActive('highPriority')"
@@ -85,7 +85,7 @@
       Alta prioridad
     </button>
     <button (click)="toggleFilter('myTasks')"
-      class="flex-1 whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-medium transition sm:flex-none sm:px-4"
+      class="flex-1 whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-medium transition sm:flex-none sm:px-4 cursor-pointer"
       [style.color]="isFilterActive('myTasks') ? '#ffffff' : null"
       [class.bg-blue-500]="isFilterActive('myTasks')" [class.text-white]="isFilterActive('myTasks')"
       [class.border-blue-500]="isFilterActive('myTasks')" [class.hover:bg-blue-600]="isFilterActive('myTasks')"
@@ -95,7 +95,7 @@
       Mis tareas
     </button>
     <button (click)="toggleFilter('thisWeek')"
-      class="flex-1 whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-medium transition sm:flex-none sm:px-4"
+      class="flex-1 whitespace-nowrap rounded-lg border px-3 py-2 text-sm font-medium transition sm:flex-none sm:px-4 cursor-pointer"
       [style.color]="isFilterActive('thisWeek') ? '#ffffff' : null"
       [class.bg-emerald-500]="isFilterActive('thisWeek')" [class.text-white]="isFilterActive('thisWeek')"
       [class.border-emerald-500]="isFilterActive('thisWeek')" [class.hover:bg-emerald-600]="isFilterActive('thisWeek')"
@@ -126,7 +126,7 @@
 <div class="mx-auto flex w-full flex-col gap-4 px-0 md:w-max md:flex-row md:gap-6 md:px-1 md:snap-x" cdkDropListGroup>
   
   @for (column of filteredColumns; track column.id) {
-  <div class="th-card th-border flex w-full flex-shrink-0 flex-col rounded-xl border md:w-80 md:snap-center md:max-h-[calc(100vh-250px)]">
+  <div class="th-card th-border flex w-full shrink-0 flex-col rounded-xl border md:w-80 md:snap-center md:max-h-[calc(100vh-250px)]">
     
     <!-- Cabecera de la columna -->
     <div class="th-card th-border top-0 z-10 flex items-center justify-between rounded-t-xl border-b px-4 py-3 md:sticky">

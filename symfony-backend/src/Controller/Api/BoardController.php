@@ -53,7 +53,8 @@ class BoardController extends AbstractController
         // Obtener el primer tablero del proyecto (asumimos 1 por ahora)
         $board = $this->em->getRepository(Board::class)->findOneBy(['project' => $project]);
         if (!$board) {
-            return $this->json(['message' => 'No hay tableros configurados en este proyecto.'], Response::HTTP_NOT_FOUND);
+            $board = $this->createDefaultBoard($project);
+            $this->em->flush();
         }
 
         // Obtener columnas del tablero ordenadas
@@ -121,6 +122,34 @@ class BoardController extends AbstractController
             'board' => $boardData,
             'currentUserId' => $user->getId(),
         ]);
+    }
+
+    private function createDefaultBoard(Project $project): Board
+    {
+        $board = (new Board())
+            ->setProject($project)
+            ->setName('Tablero Principal');
+
+        $columns = [
+            ['name' => 'Por hacer', 'position' => 1, 'color' => '#E2E8F0'],
+            ['name' => 'En progreso', 'position' => 2, 'color' => '#FDE68A'],
+            ['name' => 'En revisión', 'position' => 3, 'color' => '#BFDBFE'],
+            ['name' => 'Hecho', 'position' => 4, 'color' => '#BBF7D0'],
+        ];
+
+        foreach ($columns as $columnData) {
+            $column = (new BoardColumn())
+                ->setBoard($board)
+                ->setName($columnData['name'])
+                ->setPosition($columnData['position'])
+                ->setColor($columnData['color']);
+
+            $this->em->persist($column);
+        }
+
+        $this->em->persist($board);
+
+        return $board;
     }
 
     #[Route('/cards/{cardId}/move', name: 'move_card', methods: ['PUT'])]

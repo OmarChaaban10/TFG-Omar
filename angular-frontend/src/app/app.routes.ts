@@ -29,12 +29,7 @@ export const routes: Routes = [
 		canActivate: [authGuard]
 	},
 	{
-		path: 'board/:id',
-		component: BoardComponent,
-		canActivate: [authGuard]
-	},
-	{
-		path: 'board/:id/:name',
+		path: 'board',
 		component: BoardComponent,
 		canActivate: [authGuard]
 	}

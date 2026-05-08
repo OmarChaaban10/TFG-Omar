@@ -209,8 +209,9 @@ export class DashboardComponent implements OnInit {
   }
 
   openBoard(projectId: number, projectName = ''): void {
-    this.router.navigate(['/board', projectId], {
-      queryParams: projectName ? { name: projectName } : undefined,
+    sessionStorage.setItem('selected_board_project', JSON.stringify({ id: projectId, name: projectName }));
+    this.router.navigate(['/board'], {
+      state: { projectId, projectName },
     });
   }
 

@@ -5,7 +5,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs/operators';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { ThemeToggleComponent } from '../shared/theme-toggle/theme-toggle.component';
 
 export interface Label {
@@ -52,6 +52,11 @@ interface BoardResponse {
 
 type BoardFilter = 'highPriority' | 'myTasks' | 'thisWeek';
 
+interface SelectedBoardProject {
+  id: number;
+  name: string;
+}
+
 @Component({
   selector: 'app-board',
   standalone: true,
@@ -76,25 +81,19 @@ export class BoardComponent implements OnInit {
   connectedLists: string[] = [];
 
   private readonly http = inject(HttpClient);
-  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private loadedProjectId: number | null = null;
 
   ngOnInit(): void {
-    this.route.paramMap
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((params) => {
-        const routeProjectId = Number(params.get('id'));
+    const selectedProject = this.getSelectedProject();
 
-        if (Number.isInteger(routeProjectId) && routeProjectId > 0) {
-          const projectName = this.route.snapshot.queryParamMap.get('name') ?? params.get('name') ?? '';
-          this.loadProject(routeProjectId, projectName);
-          return;
-        }
+    if (selectedProject) {
+      this.loadProject(selectedProject.id, selectedProject.name);
+      return;
+    }
 
-        this.error = 'Proyecto no válido.';
-      });
+    this.error = 'Selecciona un proyecto desde el dashboard para abrir su tablero.';
   }
 
   get boardTitle(): string {
@@ -117,6 +116,34 @@ export class BoardComponent implements OnInit {
     this.projectName = projectName || this.projectName;
     this.loadedProjectId = projectId;
     this.fetchBoard();
+  }
+
+  private getSelectedProject(): SelectedBoardProject | null {
+    const state = window.history.state as { projectId?: unknown; projectName?: unknown };
+    const stateProjectId = Number(state.projectId);
+
+    if (Number.isInteger(stateProjectId) && stateProjectId > 0) {
+      return {
+        id: stateProjectId,
+        name: typeof state.projectName === 'string' ? state.projectName : '',
+      };
+    }
+
+    const storedProject = sessionStorage.getItem('selected_board_project');
+    if (!storedProject) return null;
+
+    try {
+      const parsed = JSON.parse(storedProject) as { id?: unknown; name?: unknown };
+      const id = Number(parsed.id);
+      if (!Number.isInteger(id) || id <= 0) return null;
+
+      return {
+        id,
+        name: typeof parsed.name === 'string' ? parsed.name : '',
+      };
+    } catch {
+      return null;
+    }
   }
 
   fetchBoard(): void {
