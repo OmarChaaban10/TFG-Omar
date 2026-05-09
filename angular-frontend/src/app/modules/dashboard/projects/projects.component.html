@@ -3,6 +3,34 @@
   <p class="text-slate-400 mt-1">Todos los proyectos en los que participas</p>
 </div>
 
+<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+  <div class="relative w-full sm:max-w-md">
+    <div class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    </div>
+    <input type="text" [(ngModel)]="searchQuery" placeholder="Buscar proyectos, miembros o roles..."
+      class="th-input w-full rounded-lg border py-2.5 pl-9 pr-10 text-sm outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500" />
+    @if (hasActiveSearch) {
+    <button type="button" (click)="clearSearch()"
+      class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 transition hover:text-white cursor-pointer"
+      aria-label="Limpiar búsqueda">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+    }
+  </div>
+
+  @if (hasActiveSearch) {
+  <span class="text-sm text-slate-400">
+    {{ filteredProjects.length }} de {{ allProjects.length }} proyectos
+  </span>
+  }
+</div>
+
 <!-- Error -->
 @if (projectsError && !isLoadingProjects) {
 <div
@@ -45,8 +73,22 @@
 </div>
 }
 
+@if (allProjects.length > 0 && filteredProjects.length === 0) {
+<div class="th-card border border-dashed border-slate-700 rounded-lg p-8 text-center">
+  <svg class="w-12 h-12 mx-auto text-slate-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+  </svg>
+  <p class="text-slate-500">No hay proyectos que coincidan con la búsqueda.</p>
+  <button type="button" (click)="clearSearch()"
+    class="mt-3 text-orange-400 hover:text-orange-300 text-sm font-medium transition cursor-pointer">
+    Limpiar búsqueda
+  </button>
+</div>
+}
+
 <div class="space-y-4">
-  @for (project of allProjects; track project.id) {
+  @for (project of filteredProjects; track project.id) {
   <div class="th-card border border-slate-700 rounded-lg overflow-hidden transition-all">
     <!-- Project header (clickable to expand) -->
     <button (click)="toggleProjectExpand(project.id)"

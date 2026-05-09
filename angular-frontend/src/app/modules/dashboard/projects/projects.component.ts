@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs/operators';
+import { FormsModule } from '@angular/forms';
 
 interface ProjectMemberDetail {
   id: number;
@@ -28,7 +29,7 @@ interface ProjectFull {
 @Component({
   selector: 'app-projects',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './projects.component.html',
 })
 export class ProjectsComponent implements OnInit {
@@ -36,6 +37,7 @@ export class ProjectsComponent implements OnInit {
   @Output() requestOpenBoard = new EventEmitter<{id: number, name: string}>();
 
   allProjects: ProjectFull[] = [];
+  searchQuery = '';
   isLoadingProjects = false;
   projectsError = '';
   expandedProjectIds: Set<number> = new Set();
@@ -45,6 +47,26 @@ export class ProjectsComponent implements OnInit {
 
   ngOnInit(): void {
     this.fetchAllProjects();
+  }
+
+  get filteredProjects(): ProjectFull[] {
+    const query = this.searchQuery.toLowerCase().trim();
+    if (!query) return this.allProjects;
+
+    return this.allProjects.filter(project =>
+      project.name.toLowerCase().includes(query)
+      || (project.description?.toLowerCase().includes(query) ?? false)
+      || project.myRole.toLowerCase().includes(query)
+      || project.members.some(member =>
+        member.name.toLowerCase().includes(query)
+        || member.email.toLowerCase().includes(query)
+        || this.getRoleLabel(member.role).toLowerCase().includes(query)
+      )
+    );
+  }
+
+  get hasActiveSearch(): boolean {
+    return this.searchQuery.trim().length > 0;
   }
 
   fetchAllProjects(): void {
@@ -75,6 +97,10 @@ export class ProjectsComponent implements OnInit {
 
   openBoard(id: number, name: string): void {
     this.requestOpenBoard.emit({ id, name });
+  }
+
+  clearSearch(): void {
+    this.searchQuery = '';
   }
 
   toggleProjectExpand(projectId: number): void {
