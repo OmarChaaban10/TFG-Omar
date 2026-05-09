@@ -52,6 +52,10 @@ interface BoardResponse {
   assignees: Assignee[];
 }
 
+interface ColumnResponse {
+  column: BoardColumn;
+}
+
 type BoardFilter = 'highPriority' | 'myTasks' | 'thisWeek';
 
 interface SelectedBoardProject {
@@ -77,6 +81,18 @@ export class BoardComponent implements OnInit {
   showCardModal = false;
   selectedCard: Card | null = null;
   selectedColumnId = 0;
+  showColumnForm = false;
+  newColumnName = '';
+  newColumnColor = '#FB923C';
+  isCreatingColumn = false;
+  columnCreateError = '';
+  showDeleteColumnForm = false;
+  columnToDeleteId = 0;
+  columnPendingDeletion: BoardColumn | null = null;
+  showDeleteColumnConfirm = false;
+  isDeletingColumn = false;
+  columnDeleteError = '';
+  readonly columnColorOptions = ['#FB923C', '#38BDF8', '#A78BFA', '#34D399', '#F87171', '#E2E8F0'];
   activeFilters: Record<BoardFilter, boolean> = {
     highPriority: false,
     myTasks: false,
@@ -215,6 +231,134 @@ export class BoardComponent implements OnInit {
   handleCardSaved(): void {
     this.closeCardModal();
     this.fetchBoard();
+  }
+
+  openCreateColumnForm(): void {
+    this.showColumnForm = true;
+    this.showDeleteColumnForm = false;
+    this.columnCreateError = '';
+  }
+
+  cancelCreateColumn(): void {
+    this.showColumnForm = false;
+    this.newColumnName = '';
+    this.newColumnColor = '#FB923C';
+    this.columnCreateError = '';
+  }
+
+  openDeleteColumnForm(): void {
+    this.showDeleteColumnForm = true;
+    this.showColumnForm = false;
+    this.columnDeleteError = '';
+    this.columnToDeleteId = this.columnToDeleteId || this.board?.columns[0]?.id || 0;
+  }
+
+  cancelDeleteColumn(): void {
+    if (this.isDeletingColumn) return;
+
+    this.showDeleteColumnForm = false;
+    this.showDeleteColumnConfirm = false;
+    this.columnToDeleteId = 0;
+    this.columnPendingDeletion = null;
+    this.columnDeleteError = '';
+  }
+
+  createColumn(): void {
+    if (!this.board || this.isCreatingColumn) return;
+
+    const name = this.newColumnName.trim();
+    if (!name) {
+      this.columnCreateError = 'El nombre de la columna es obligatorio.';
+      return;
+    }
+
+    this.isCreatingColumn = true;
+    this.columnCreateError = '';
+
+    const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
+
+    this.http.post<ColumnResponse>(`/api/projects/${this.projectId}/board/columns`,
+      { name, color: this.newColumnColor },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+      .pipe(
+        finalize(() => { this.isCreatingColumn = false; }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (res) => {
+          if (!this.board) return;
+
+          this.board.columns = [...this.board.columns, res.column]
+            .sort((a, b) => a.position - b.position);
+          this.connectedLists = this.board.columns.map(column => `col-${column.id}`);
+          this.cancelCreateColumn();
+        },
+        error: (err) => {
+          this.columnCreateError = err.error?.message || 'No se pudo crear la columna.';
+        },
+      });
+  }
+
+  deleteColumn(): void {
+    if (!this.board) return;
+
+    const column = this.board.columns.find(item => item.id === this.columnToDeleteId);
+    if (!column) {
+      this.columnDeleteError = 'Selecciona una columna.';
+      return;
+    }
+
+    if (this.board.columns.length <= 1) {
+      this.columnDeleteError = 'No puedes eliminar la ultima columna del tablero.';
+      return;
+    }
+
+    this.columnDeleteError = '';
+    this.columnPendingDeletion = column;
+    this.showDeleteColumnConfirm = true;
+  }
+
+  closeDeleteColumnConfirm(): void {
+    if (this.isDeletingColumn) return;
+
+    this.showDeleteColumnConfirm = false;
+    this.columnPendingDeletion = null;
+  }
+
+  confirmDeleteColumn(): void {
+    if (!this.board || this.isDeletingColumn || !this.columnPendingDeletion) {
+      return;
+    }
+
+    const column = this.columnPendingDeletion;
+    this.isDeletingColumn = true;
+    this.columnDeleteError = '';
+
+    const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
+
+    this.http.delete(`/api/projects/${this.projectId}/board/columns/${column.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .pipe(
+        finalize(() => { this.isDeletingColumn = false; }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => {
+          if (!this.board) return;
+
+          this.board.columns = this.board.columns
+            .filter(item => item.id !== column.id)
+            .map((item, index) => ({ ...item, position: index + 1 }));
+          this.connectedLists = this.board.columns.map(item => `col-${item.id}`);
+          this.isDeletingColumn = false;
+          this.cancelDeleteColumn();
+        },
+        error: (err) => {
+          this.columnDeleteError = err.error?.message || 'No se pudo eliminar la columna.';
+        },
+      });
   }
 
   private getColumnIdForCard(cardId: number): number {

@@ -51,14 +51,104 @@
         <span>{{ board?.columns?.length || 0 }} columnas</span>
       </p>
     </div>
-    <div class="w-full sm:w-auto">
-      <!-- Botón de añadir columna (Solo UI para esta iteracion) -->
-      <button class="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600 sm:w-auto cursor-pointer">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-        Nueva columna
-      </button>
+    <div class="relative w-full sm:w-auto">
+      <div class="flex flex-col gap-2 sm:flex-row">
+        <button type="button" (click)="openCreateColumnForm()"
+          class="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600 sm:w-auto cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Nueva columna
+        </button>
+
+        <button type="button" (click)="openDeleteColumnForm()" [disabled]="!board?.columns?.length"
+          class="flex w-full items-center justify-center gap-2 rounded-lg border border-red-500/40 px-4 py-2 text-sm font-medium text-red-400 transition hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m2 0H7m3-3h4a1 1 0 011 1v2H9V5a1 1 0 011-1z" />
+          </svg>
+          Eliminar columna
+        </button>
+      </div>
+
+      @if (showColumnForm) {
+      <form (submit)="createColumn(); $event.preventDefault()"
+        class="th-card th-border z-20 mt-3 w-full rounded-lg border p-3 shadow-xl shadow-black/20 sm:absolute sm:right-0 sm:w-80">
+        @if (columnCreateError) {
+        <div class="mb-3 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+          {{ columnCreateError }}
+        </div>
+        }
+
+        <label for="new-column-name" class="mb-1.5 block text-xs font-bold uppercase th-text-muted">Nombre</label>
+        <input id="new-column-name" name="newColumnName" type="text" [(ngModel)]="newColumnName" maxlength="255"
+          class="th-input w-full rounded-lg border px-3 py-2 text-sm font-semibold outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+          placeholder="Nombre de columna" />
+
+        <div class="mt-3">
+          <span class="mb-1.5 block text-xs font-bold uppercase th-text-muted">Color</span>
+          <div class="flex flex-wrap gap-2">
+            @for (color of columnColorOptions; track color) {
+            <button type="button" (click)="newColumnColor = color"
+              class="flex h-8 w-8 items-center justify-center rounded-full border transition cursor-pointer"
+              [class.border-white]="newColumnColor === color" [class.border-slate-700]="newColumnColor !== color"
+              [style.backgroundColor]="color" [attr.aria-label]="'Color ' + color">
+              @if (newColumnColor === color) {
+              <svg class="h-4 w-4 text-slate-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+              </svg>
+              }
+            </button>
+            }
+          </div>
+        </div>
+
+        <div class="mt-4 flex justify-end gap-2">
+          <button type="button" (click)="cancelCreateColumn()"
+            class="rounded-lg px-3 py-2 text-sm font-medium text-slate-400 transition hover:bg-slate-800/50 hover:text-white cursor-pointer">
+            Cancelar
+          </button>
+          <button type="submit" [disabled]="isCreatingColumn"
+            class="rounded-lg bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer">
+            {{ isCreatingColumn ? 'Creando...' : 'Crear' }}
+          </button>
+        </div>
+      </form>
+      }
+
+      @if (showDeleteColumnForm) {
+      <form (submit)="deleteColumn(); $event.preventDefault()"
+        class="th-card th-border z-20 mt-3 w-full rounded-lg border p-3 shadow-xl shadow-black/20 sm:absolute sm:right-0 sm:w-80">
+        @if (columnDeleteError) {
+        <div class="mb-3 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-400">
+          {{ columnDeleteError }}
+        </div>
+        }
+
+        <label for="delete-column-id" class="mb-1.5 block text-xs font-bold uppercase th-text-muted">Columna</label>
+        <select id="delete-column-id" name="columnToDeleteId" [(ngModel)]="columnToDeleteId"
+          class="th-input w-full rounded-lg border px-3 py-2 text-sm outline-none transition focus:border-red-500 focus:ring-1 focus:ring-red-500">
+          @for (column of board?.columns; track column.id) {
+          <option [ngValue]="column.id">{{ column.name }} ({{ column.cards.length }})</option>
+          }
+        </select>
+
+        <p class="mt-3 text-xs leading-relaxed text-slate-400">
+          Al eliminar una columna tambien se eliminaran sus tarjetas.
+        </p>
+
+        <div class="mt-4 flex justify-end gap-2">
+          <button type="button" (click)="cancelDeleteColumn()"
+            class="rounded-lg px-3 py-2 text-sm font-medium text-slate-400 transition hover:bg-slate-800/50 hover:text-white cursor-pointer">
+            Cancelar
+          </button>
+          <button type="submit" [disabled]="isDeletingColumn"
+            class="rounded-lg bg-red-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-red-500/20 transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer">
+            {{ isDeletingColumn ? 'Eliminando...' : 'Eliminar' }}
+          </button>
+        </div>
+      </form>
+      }
     </div>
   </div>
 
@@ -161,12 +251,18 @@
 
         <p class="mb-3 wrap-break-words text-sm font-semibold leading-snug text-slate-200">{{ card.title }}</p>
         
-        <!-- Prioridad y Asignado -->
+        <!-- Prioridad, etiqueta y asignado -->
         <div class="flex items-center justify-between mt-auto">
-          <div class="flex items-center gap-2">
+          <div class="flex min-w-0 flex-wrap items-center gap-2">
             @if (card.priority) {
             <span class="text-[10px] font-bold px-2 py-0.5 rounded-sm uppercase tracking-wider" [ngClass]="getPriorityColor(card.priority)">
               {{ getPriorityLabel(card.priority) }}
+            </span>
+            }
+            @if (card.labels[0]) {
+            <span class="max-w-28 truncate rounded-sm px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white"
+              [style.backgroundColor]="card.labels[0].color || '#64748B'">
+              {{ card.labels[0].name }}
             </span>
             }
           </div>
@@ -219,4 +315,59 @@
 <app-card-modal [projectId]="projectId" [columns]="board.columns" [assignees]="assignees" [card]="selectedCard"
   [initialColumnId]="selectedColumnId" [currentUserId]="currentUserId" (closed)="closeCardModal()" (saved)="handleCardSaved()">
 </app-card-modal>
+}
+
+@if (showDeleteColumnConfirm && columnPendingDeletion) {
+<div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
+  <button type="button" class="absolute inset-0 bg-black/70 backdrop-blur-sm cursor-default"
+    aria-label="Cerrar confirmacion" (click)="closeDeleteColumnConfirm()"></button>
+
+  <section class="relative w-full max-w-md overflow-hidden rounded-xl border th-card th-border shadow-2xl shadow-black/40">
+    <header class="flex items-start gap-3 border-b th-border px-5 py-4">
+      <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-red-500/10 text-red-400">
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+        </svg>
+      </div>
+      <div class="min-w-0">
+        <h2 class="wrap-break-words text-lg font-bold th-text-heading">Eliminar columna</h2>
+        <p class="mt-1 text-sm th-text-muted">Esta accion eliminara la columna del tablero.</p>
+      </div>
+    </header>
+
+    <div class="space-y-4 px-5 py-4">
+      @if (columnDeleteError) {
+      <div class="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+        {{ columnDeleteError }}
+      </div>
+      }
+
+      <div class="rounded-lg border th-border bg-red-500/5 p-4">
+        <div class="flex items-center gap-2">
+          <span class="h-2.5 w-2.5 shrink-0 rounded-full" [style.backgroundColor]="columnPendingDeletion.color"></span>
+          <p class="wrap-break-words text-sm font-semibold text-slate-200">{{ columnPendingDeletion.name }}</p>
+        </div>
+        <p class="mt-2 text-sm text-slate-400">
+          Contiene {{ columnPendingDeletion.cards.length }} tarjeta(s).
+        </p>
+      </div>
+
+      <p class="text-sm leading-relaxed text-slate-400">
+        Al confirmar, tambien se eliminaran todas las tarjetas de esta columna. Esta accion no se puede deshacer.
+      </p>
+    </div>
+
+    <footer class="flex flex-col-reverse gap-3 border-t th-border px-5 py-4 sm:flex-row sm:justify-end">
+      <button type="button" (click)="closeDeleteColumnConfirm()" [disabled]="isDeletingColumn"
+        class="rounded-lg px-5 py-2 text-sm font-medium text-slate-400 transition hover:bg-slate-800/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer">
+        Cancelar
+      </button>
+      <button type="button" (click)="confirmDeleteColumn()" [disabled]="isDeletingColumn"
+        class="rounded-lg bg-red-500 px-5 py-2 text-sm font-bold text-white shadow-lg shadow-red-500/20 transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer">
+        {{ isDeletingColumn ? 'Eliminando...' : 'Eliminar columna' }}
+      </button>
+    </footer>
+  </section>
+</div>
 }

@@ -23,6 +23,17 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/projects/{projectId}/board', name: 'api_board_')]
 class BoardController extends AbstractController
 {
+    private const CARD_LABEL_COLORS = [
+        'Bug' => '#EF4444',
+        'Feature' => '#3B82F6',
+        'Frontend' => '#10B981',
+        'Backend' => '#8B5CF6',
+        'Design' => '#EC4899',
+        'Marketing' => '#F59E0B',
+        'QA' => '#14B8A6',
+        'Docs' => '#64748B',
+    ];
+
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly ProjectLogService $logService,
@@ -87,6 +98,7 @@ class BoardController extends AbstractController
                         'name' => $label->getName(),
                         'color' => $label->getColor()
                     ];
+                    break;
                 }
 
                 $assignee = $card->getAssignee();
@@ -167,6 +179,7 @@ class BoardController extends AbstractController
                 'name' => $label->getName(),
                 'color' => $label->getColor(),
             ];
+            break;
         }
 
         $assignee = $card->getAssignee();
@@ -213,6 +226,118 @@ class BoardController extends AbstractController
         $this->em->persist($board);
 
         return $board;
+    }
+
+    #[Route('/columns', name: 'create_column', methods: ['POST'])]
+    public function createColumn(int $projectId, Request $request): JsonResponse
+    {
+        $context = $this->getEditableProjectContext($projectId);
+        if ($context instanceof JsonResponse) {
+            return $context;
+        }
+
+        ['project' => $project, 'user' => $user] = $context;
+
+        $board = $this->em->getRepository(Board::class)->findOneBy(['project' => $project]);
+        if (!$board) {
+            $board = $this->createDefaultBoard($project);
+            $this->em->flush();
+        }
+
+        $data = json_decode($request->getContent(), true);
+        if (!is_array($data)) {
+            return $this->json(['message' => 'Solicitud invalida.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $name = trim((string) ($data['name'] ?? ''));
+        if ($name === '') {
+            return $this->json(['message' => 'El nombre de la columna es obligatorio.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (mb_strlen($name) > 255) {
+            return $this->json(['message' => 'El nombre no puede superar los 255 caracteres.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $color = trim((string) ($data['color'] ?? '#FB923C'));
+        if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $color)) {
+            return $this->json(['message' => 'El color de la columna no es valido.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $position = $this->em->getRepository(BoardColumn::class)->count(['board' => $board]) + 1;
+
+        $column = (new BoardColumn())
+            ->setBoard($board)
+            ->setName($name)
+            ->setPosition($position)
+            ->setColor($color);
+
+        $this->em->persist($column);
+        $this->em->flush();
+
+        $this->logService->logAction(
+            $project,
+            $user,
+            'column_created',
+            sprintf('Creó la columna "%s".', $column->getName())
+        );
+
+        return $this->json([
+            'column' => [
+                'id' => $column->getId(),
+                'name' => $column->getName(),
+                'color' => $column->getColor(),
+                'position' => $column->getPosition(),
+                'cards' => [],
+            ],
+        ], Response::HTTP_CREATED);
+    }
+
+    #[Route('/columns/{columnId}', name: 'delete_column', methods: ['DELETE'])]
+    public function deleteColumn(int $projectId, int $columnId): JsonResponse
+    {
+        $context = $this->getEditableProjectContext($projectId);
+        if ($context instanceof JsonResponse) {
+            return $context;
+        }
+
+        ['project' => $project, 'user' => $user] = $context;
+
+        $column = $this->em->getRepository(BoardColumn::class)->find($columnId);
+        if (!$column || $column->getBoard()->getProject() !== $project) {
+            return $this->json(['message' => 'Columna no encontrada.'], Response::HTTP_NOT_FOUND);
+        }
+
+        $board = $column->getBoard();
+        $columnsCount = $this->em->getRepository(BoardColumn::class)->count(['board' => $board]);
+        if ($columnsCount <= 1) {
+            return $this->json(['message' => 'No puedes eliminar la ultima columna del tablero.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $columnName = $column->getName();
+        $this->em->remove($column);
+        $this->em->flush();
+
+        $remainingColumns = $this->em->getRepository(BoardColumn::class)->findBy(
+            ['board' => $board],
+            ['position' => 'ASC']
+        );
+
+        $position = 1;
+        foreach ($remainingColumns as $remainingColumn) {
+            $remainingColumn->setPosition($position);
+            $position++;
+        }
+
+        $this->em->flush();
+
+        $this->logService->logAction(
+            $project,
+            $user,
+            'column_deleted',
+            sprintf('Eliminó la columna "%s".', $columnName)
+        );
+
+        return $this->json(['message' => 'Columna eliminada correctamente.']);
     }
 
     #[Route('/columns/{columnId}/cards', name: 'create_card', methods: ['POST'])]
@@ -378,12 +503,9 @@ class BoardController extends AbstractController
             return;
         }
 
-        $labelColors = ['#8B5CF6', '#3B82F6', '#10B981', '#F97316', '#EF4444'];
-        $index = 0;
-
         foreach ($labels as $labelName) {
             $name = trim((string) $labelName);
-            if ($name === '') {
+            if ($name === '' || !array_key_exists($name, self::CARD_LABEL_COLORS)) {
                 continue;
             }
 
@@ -391,12 +513,12 @@ class BoardController extends AbstractController
             if (!$label instanceof Label) {
                 $label = (new Label())
                     ->setName($name)
-                    ->setColor($labelColors[$index % count($labelColors)]);
+                    ->setColor(self::CARD_LABEL_COLORS[$name]);
                 $this->em->persist($label);
             }
 
             $card->addLabel($label);
-            $index++;
+            break;
         }
     }
 

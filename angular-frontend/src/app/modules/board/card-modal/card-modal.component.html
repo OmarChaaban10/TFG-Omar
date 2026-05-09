@@ -47,10 +47,24 @@
         </div>
 
         <div>
-          <label for="card-labels" class="mb-1.5 block text-xs font-bold uppercase th-text-muted">Etiquetas</label>
-          <input id="card-labels" type="text" [(ngModel)]="labelsText"
-            class="w-full rounded-lg border th-input px-4 py-3 text-sm outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
-            placeholder="Frontend, Angular, UI" />
+          <span class="mb-1.5 block text-xs font-bold uppercase th-text-muted">Etiqueta</span>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" (click)="selectedLabelName = ''"
+              class="rounded-sm border px-2 py-1 text-[11px] font-bold uppercase tracking-wider transition cursor-pointer"
+              [class.border-slate-500]="selectedLabelName === ''" [class.text-white]="selectedLabelName === ''"
+              [class.th-border]="selectedLabelName !== ''" [class.th-card-alt]="selectedLabelName !== ''"
+              [class.text-slate-400]="selectedLabelName !== ''">
+              Sin etiqueta
+            </button>
+            @for (label of labelOptions; track label.name) {
+            <button type="button" (click)="selectedLabelName = label.name"
+              class="rounded-sm px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-white transition ring-offset-2 ring-offset-[var(--bg-card)] cursor-pointer"
+              [class.ring-2]="selectedLabelName === label.name" [class.ring-white]="selectedLabelName === label.name"
+              [style.backgroundColor]="label.color">
+              {{ label.name }}
+            </button>
+            }
+          </div>
         </div>
       </div>
 

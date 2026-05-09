@@ -8,6 +8,11 @@ import type { Assignee, BoardColumn, Card } from '../board.component';
 
 type CardPriority = 'low' | 'medium' | 'high';
 
+interface LabelOption {
+  name: string;
+  color: string;
+}
+
 @Component({
   selector: 'app-card-modal',
   standalone: true,
@@ -31,9 +36,19 @@ export class CardModalComponent implements OnChanges {
   assigneeId: number | null = null;
   priority: CardPriority = 'medium';
   dueDate = '';
-  labelsText = '';
+  selectedLabelName = '';
   isSaving = false;
   error = '';
+  readonly labelOptions: LabelOption[] = [
+    { name: 'Bug', color: '#EF4444' },
+    { name: 'Feature', color: '#3B82F6' },
+    { name: 'Frontend', color: '#10B981' },
+    { name: 'Backend', color: '#8B5CF6' },
+    { name: 'Design', color: '#EC4899' },
+    { name: 'Marketing', color: '#F59E0B' },
+    { name: 'QA', color: '#14B8A6' },
+    { name: 'Docs', color: '#64748B' },
+  ];
 
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
@@ -75,10 +90,7 @@ export class CardModalComponent implements OnChanges {
       assigneeId: this.assigneeId || null,
       priority: this.priority,
       dueDate: this.dueDate || null,
-      labels: this.labelsText
-        .split(',')
-        .map(label => label.trim())
-        .filter(Boolean),
+      labels: this.selectedLabelName ? [this.selectedLabelName] : [],
     };
 
     const request = this.isEditing && this.card
@@ -119,7 +131,7 @@ export class CardModalComponent implements OnChanges {
     this.assigneeId = this.card?.assignee?.id ?? null;
     this.priority = this.normalizePriority(this.card?.priority);
     this.dueDate = this.card?.dueDate ? this.card.dueDate.slice(0, 10) : '';
-    this.labelsText = this.card?.labels.map(label => label.name).join(', ') ?? '';
+    this.selectedLabelName = this.normalizeLabel(this.card?.labels[0]?.name);
   }
 
   private normalizePriority(priority: string | null | undefined): CardPriority {
@@ -128,5 +140,9 @@ export class CardModalComponent implements OnChanges {
     }
 
     return 'medium';
+  }
+
+  private normalizeLabel(labelName: string | undefined): string {
+    return this.labelOptions.some(option => option.name === labelName) ? labelName ?? '' : '';
   }
 }
