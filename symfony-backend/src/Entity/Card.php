@@ -46,6 +46,10 @@ class Card
     #[ORM\OneToMany(mappedBy: 'card', targetEntity: Notification::class, orphanRemoval: true)]
     private Collection $notifications;
 
+    /** @var Collection<int, CardComment> */
+    #[ORM\OneToMany(mappedBy: 'card', targetEntity: CardComment::class, orphanRemoval: true)]
+    private Collection $comments;
+
     /** @var Collection<int, Label> */
     #[ORM\ManyToMany(targetEntity: Label::class, inversedBy: 'cards')]
     #[ORM\JoinTable(name: 'card_labels')]
@@ -56,6 +60,7 @@ class Card
     public function __construct()
     {
         $this->notifications = new ArrayCollection();
+        $this->comments = new ArrayCollection();
         $this->labels = new ArrayCollection();
     }
 
@@ -168,6 +173,31 @@ class Card
     {
         if ($this->notifications->removeElement($notification) && $notification->getCard() === $this) {
             $notification->setCard(null);
+        }
+
+        return $this;
+    }
+
+    /** @return Collection<int, CardComment> */
+    public function getComments(): Collection
+    {
+        return $this->comments;
+    }
+
+    public function addComment(CardComment $comment): self
+    {
+        if (!$this->comments->contains($comment)) {
+            $this->comments->add($comment);
+            $comment->setCard($this);
+        }
+
+        return $this;
+    }
+
+    public function removeComment(CardComment $comment): self
+    {
+        if ($this->comments->removeElement($comment) && $comment->getCard() === $this) {
+            $comment->setCard(null);
         }
 
         return $this;

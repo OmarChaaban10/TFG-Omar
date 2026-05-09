@@ -107,6 +107,18 @@ body {
 	color: var(--text-primary);
 }
 .th-input::placeholder { color: var(--text-muted); }
+.th-input[type="date"] { color-scheme: light; }
+:root .th-input[type="date"]::-webkit-calendar-picker-indicator,
+[data-theme="dark"] .th-input[type="date"]::-webkit-calendar-picker-indicator {
+	filter: invert(1) opacity(0.75);
+	cursor: pointer;
+}
+[data-theme="light"] .th-input[type="date"] {
+	color-scheme: light;
+}
+[data-theme="light"] .th-input[type="date"]::-webkit-calendar-picker-indicator {
+	filter: none;
+}
 .th-dropdown { background-color: var(--bg-dropdown); border-color: var(--border); }
 .th-modal { background-color: var(--bg-modal); border-color: var(--border); }
 .th-expanded { background-color: var(--bg-expanded); }
@@ -120,6 +132,10 @@ body {
 .th-border-light { border-color: var(--border-light); }
 
 .th-divider { border-color: var(--border); }
+
+.th-label-chip {
+	color: #ffffff !important;
+}
 
 /* Card and surface hover state for light theme */
 [data-theme="light"] .th-card { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06); }

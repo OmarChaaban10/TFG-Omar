@@ -13,6 +13,27 @@ interface LabelOption {
   color: string;
 }
 
+interface CardCommentAuthor {
+  id: number;
+  name: string;
+  avatarUrl: string | null;
+}
+
+interface CardComment {
+  id: number;
+  content: string;
+  createdAt: string;
+  author: CardCommentAuthor | null;
+}
+
+interface CommentsResponse {
+  comments: CardComment[];
+}
+
+interface CommentResponse {
+  comment: CardComment;
+}
+
 @Component({
   selector: 'app-card-modal',
   standalone: true,
@@ -39,6 +60,11 @@ export class CardModalComponent implements OnChanges {
   selectedLabelName = '';
   isSaving = false;
   error = '';
+  comments: CardComment[] = [];
+  newComment = '';
+  isLoadingComments = false;
+  isSavingComment = false;
+  commentError = '';
   readonly labelOptions: LabelOption[] = [
     { name: 'Bug', color: '#EF4444' },
     { name: 'Feature', color: '#3B82F6' },
@@ -60,6 +86,7 @@ export class CardModalComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['card'] || changes['initialColumnId']) {
       this.resetForm();
+      this.loadComments();
     }
   }
 
@@ -123,6 +150,40 @@ export class CardModalComponent implements OnChanges {
     }
   }
 
+  saveComment(): void {
+    if (!this.card || this.isSavingComment) return;
+
+    const content = this.newComment.trim();
+    if (!content) {
+      this.commentError = 'Escribe un comentario.';
+      return;
+    }
+
+    this.isSavingComment = true;
+    this.commentError = '';
+
+    const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
+
+    this.http.post<CommentResponse>(`/api/projects/${this.projectId}/board/cards/${this.card.id}/comments`,
+      { content },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+      .pipe(
+        finalize(() => { this.isSavingComment = false; }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (res) => {
+          this.comments = [...this.comments, res.comment];
+          this.newComment = '';
+          this.card!.commentCount = this.comments.length;
+        },
+        error: (err) => {
+          this.commentError = err.error?.message ?? 'No se pudo guardar el comentario.';
+        },
+      });
+  }
+
   private resetForm(): void {
     this.error = '';
     this.title = this.card?.title ?? '';
@@ -132,6 +193,34 @@ export class CardModalComponent implements OnChanges {
     this.priority = this.normalizePriority(this.card?.priority);
     this.dueDate = this.card?.dueDate ? this.card.dueDate.slice(0, 10) : '';
     this.selectedLabelName = this.normalizeLabel(this.card?.labels[0]?.name);
+  }
+
+  private loadComments(): void {
+    this.comments = [];
+    this.newComment = '';
+    this.commentError = '';
+
+    if (!this.card) return;
+
+    this.isLoadingComments = true;
+    const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
+
+    this.http.get<CommentsResponse>(`/api/projects/${this.projectId}/board/cards/${this.card.id}/comments`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .pipe(
+        finalize(() => { this.isLoadingComments = false; }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (res) => {
+          this.comments = res.comments;
+          this.card!.commentCount = res.comments.length;
+        },
+        error: (err) => {
+          this.commentError = err.error?.message ?? 'No se pudieron cargar los comentarios.';
+        },
+      });
   }
 
   private normalizePriority(priority: string | null | undefined): CardPriority {

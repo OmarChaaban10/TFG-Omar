@@ -7,6 +7,7 @@ namespace App\Controller\Api;
 use App\Entity\Board;
 use App\Entity\BoardColumn;
 use App\Entity\Card;
+use App\Entity\CardComment;
 use App\Entity\Label;
 use App\Entity\Project;
 use App\Entity\ProjectMember;
@@ -119,7 +120,8 @@ class BoardController extends AbstractController
                     'position' => $card->getPosition(),
                     'dueDate' => $card->getDueDate() ? $card->getDueDate()->format('c') : null,
                     'assignee' => $assigneeData,
-                    'labels' => $labelsData
+                    'labels' => $labelsData,
+                    'commentCount' => $this->em->getRepository(CardComment::class)->count(['card' => $card]),
                 ];
             }
 
@@ -197,6 +199,24 @@ class BoardController extends AbstractController
                 'avatarUrl' => $assignee->getAvatarUrl(),
             ] : null,
             'labels' => $labels,
+            'commentCount' => $this->em->getRepository(CardComment::class)->count(['card' => $card]),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function serializeComment(CardComment $comment): array
+    {
+        $author = $comment->getAuthor();
+
+        return [
+            'id' => $comment->getId(),
+            'content' => $comment->getContent(),
+            'createdAt' => $comment->getCreatedAt()->format('c'),
+            'author' => $author instanceof User ? [
+                'id' => $author->getId(),
+                'name' => $author->getName(),
+                'avatarUrl' => $author->getAvatarUrl(),
+            ] : null,
         ];
     }
 
@@ -447,6 +467,78 @@ class BoardController extends AbstractController
         );
 
         return $this->json(['card' => $this->serializeCard($card)]);
+    }
+
+    #[Route('/cards/{cardId}/comments', name: 'list_comments', methods: ['GET'])]
+    public function listComments(int $projectId, int $cardId): JsonResponse
+    {
+        $context = $this->getEditableProjectContext($projectId);
+        if ($context instanceof JsonResponse) {
+            return $context;
+        }
+
+        ['project' => $project] = $context;
+
+        $card = $this->em->getRepository(Card::class)->find($cardId);
+        if (!$card || $card->getColumn()->getBoard()->getProject() !== $project) {
+            return $this->json(['message' => 'Tarjeta no encontrada.'], Response::HTTP_NOT_FOUND);
+        }
+
+        $comments = $this->em->getRepository(CardComment::class)->findBy(
+            ['card' => $card],
+            ['createdAt' => 'ASC']
+        );
+
+        return $this->json([
+            'comments' => array_map(fn(CardComment $comment) => $this->serializeComment($comment), $comments),
+        ]);
+    }
+
+    #[Route('/cards/{cardId}/comments', name: 'create_comment', methods: ['POST'])]
+    public function createComment(int $projectId, int $cardId, Request $request): JsonResponse
+    {
+        $context = $this->getEditableProjectContext($projectId);
+        if ($context instanceof JsonResponse) {
+            return $context;
+        }
+
+        ['project' => $project, 'user' => $user] = $context;
+
+        $card = $this->em->getRepository(Card::class)->find($cardId);
+        if (!$card || $card->getColumn()->getBoard()->getProject() !== $project) {
+            return $this->json(['message' => 'Tarjeta no encontrada.'], Response::HTTP_NOT_FOUND);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        if (!is_array($data)) {
+            return $this->json(['message' => 'Solicitud invalida.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $content = trim((string) ($data['content'] ?? ''));
+        if ($content === '') {
+            return $this->json(['message' => 'El comentario no puede estar vacio.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (mb_strlen($content) > 1000) {
+            return $this->json(['message' => 'El comentario no puede superar los 1000 caracteres.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $comment = (new CardComment())
+            ->setCard($card)
+            ->setAuthor($user)
+            ->setContent($content);
+
+        $this->em->persist($comment);
+        $this->em->flush();
+
+        $this->logService->logAction(
+            $project,
+            $user,
+            'comment_created',
+            sprintf('Comentó en la tarea "%s".', $card->getTitle())
+        );
+
+        return $this->json(['comment' => $this->serializeComment($comment)], Response::HTTP_CREATED);
     }
 
     /** @return array{project: Project, user: User}|JsonResponse */

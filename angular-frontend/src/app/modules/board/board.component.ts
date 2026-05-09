@@ -30,6 +30,7 @@ export interface Card {
   dueDate: string | null;
   assignee: Assignee | null;
   labels: Label[];
+  commentCount: number;
 }
 
 export interface BoardColumn {

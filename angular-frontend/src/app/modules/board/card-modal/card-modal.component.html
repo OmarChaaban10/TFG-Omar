@@ -58,13 +58,75 @@
             </button>
             @for (label of labelOptions; track label.name) {
             <button type="button" (click)="selectedLabelName = label.name"
-              class="rounded-sm px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-white transition ring-offset-2 ring-offset-[var(--bg-card)] cursor-pointer"
-              [class.ring-2]="selectedLabelName === label.name" [class.ring-white]="selectedLabelName === label.name"
+              class="th-label-chip rounded-sm px-2 py-1 text-[11px] font-bold uppercase tracking-wider transition ring-offset-2 ring-offset-[var(--bg-card)] cursor-pointer"
+              [class.ring-2]="selectedLabelName === label.name" [class.ring-orange-400]="selectedLabelName === label.name"
               [style.backgroundColor]="label.color">
               {{ label.name }}
             </button>
             }
           </div>
+        </div>
+
+        <div class="border-t th-border pt-5">
+          <div class="mb-3 flex items-center justify-between gap-3">
+            <h3 class="text-sm font-bold th-text-heading">Comentarios</h3>
+            @if (isEditing) {
+            <span class="rounded-md bg-slate-800 px-2 py-0.5 text-xs font-bold text-slate-400">
+              {{ comments.length }}
+            </span>
+            }
+          </div>
+
+          @if (!isEditing) {
+          <p class="rounded-lg border th-border px-4 py-3 text-sm th-text-muted">
+            Crea la tarjeta para poder añadir comentarios.
+          </p>
+          } @else {
+          @if (commentError) {
+          <div class="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+            {{ commentError }}
+          </div>
+          }
+
+          <textarea id="card-comment" [(ngModel)]="newComment" rows="3" maxlength="1000"
+            class="w-full resize-none rounded-lg border th-input px-4 py-3 text-sm outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            placeholder="Añade un comentario..."></textarea>
+
+          <div class="mt-2 flex justify-end">
+            <button type="button" (click)="saveComment()" [disabled]="isSavingComment"
+              class="rounded-lg bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer">
+              {{ isSavingComment ? 'Publicando...' : 'Comentar' }}
+            </button>
+          </div>
+
+          <div class="mt-4 space-y-3">
+            @if (isLoadingComments) {
+            <div class="rounded-lg border th-border p-4 text-sm th-text-muted">Cargando comentarios...</div>
+            } @else if (comments.length === 0) {
+            <div class="rounded-lg border th-border p-4 text-sm th-text-muted">Aún no hay comentarios.</div>
+            } @else {
+            @for (comment of comments; track comment.id) {
+            <article class="rounded-lg border th-card-alt th-border p-3">
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <div class="flex min-w-0 items-center gap-2">
+                  @if (comment.author?.avatarUrl) {
+                  <img [src]="comment.author?.avatarUrl" [alt]="comment.author?.name || 'Usuario'"
+                    class="h-7 w-7 shrink-0 rounded-full object-cover">
+                  } @else {
+                  <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-500/20 text-[10px] font-bold text-blue-400">
+                    {{ (comment.author?.name || 'Usuario').substring(0, 2).toUpperCase() }}
+                  </div>
+                  }
+                  <span class="truncate text-sm font-semibold th-text-heading">{{ comment.author?.name || 'Usuario eliminado' }}</span>
+                </div>
+                <time class="shrink-0 text-xs th-text-muted">{{ comment.createdAt | date:'short' }}</time>
+              </div>
+              <p class="wrap-break-words whitespace-pre-line text-sm leading-relaxed th-text-secondary">{{ comment.content }}</p>
+            </article>
+            }
+            }
+          </div>
+          }
         </div>
       </div>
 
