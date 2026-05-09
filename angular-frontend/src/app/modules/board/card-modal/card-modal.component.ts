@@ -34,6 +34,16 @@ interface CommentResponse {
   comment: CardComment;
 }
 
+interface UploadImageResponse {
+  url: string;
+}
+
+interface ContentSegment {
+  type: 'text' | 'image';
+  value: string;
+  alt?: string;
+}
+
 @Component({
   selector: 'app-card-modal',
   standalone: true,
@@ -64,7 +74,11 @@ export class CardModalComponent implements OnChanges {
   newComment = '';
   isLoadingComments = false;
   isSavingComment = false;
+  isUploadingDescriptionImage = false;
+  isUploadingCommentImage = false;
   commentError = '';
+  descriptionImageError = '';
+  commentImageError = '';
   readonly labelOptions: LabelOption[] = [
     { name: 'Bug', color: '#EF4444' },
     { name: 'Feature', color: '#3B82F6' },
@@ -150,6 +164,24 @@ export class CardModalComponent implements OnChanges {
     }
   }
 
+  attachDescriptionImage(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || this.isUploadingDescriptionImage) return;
+
+    this.uploadImage(file, 'description');
+  }
+
+  attachCommentImage(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || this.isUploadingCommentImage) return;
+
+    this.uploadImage(file, 'comment');
+  }
+
   saveComment(): void {
     if (!this.card || this.isSavingComment) return;
 
@@ -184,6 +216,14 @@ export class CardModalComponent implements OnChanges {
       });
   }
 
+  getDescriptionSegments(): ContentSegment[] {
+    return this.parseImageMarkdown(this.description);
+  }
+
+  getCommentSegments(content: string): ContentSegment[] {
+    return this.parseImageMarkdown(content);
+  }
+
   private resetForm(): void {
     this.error = '';
     this.title = this.card?.title ?? '';
@@ -193,6 +233,7 @@ export class CardModalComponent implements OnChanges {
     this.priority = this.normalizePriority(this.card?.priority);
     this.dueDate = this.card?.dueDate ? this.card.dueDate.slice(0, 10) : '';
     this.selectedLabelName = this.normalizeLabel(this.card?.labels[0]?.name);
+    this.descriptionImageError = '';
   }
 
   private loadComments(): void {
@@ -233,5 +274,101 @@ export class CardModalComponent implements OnChanges {
 
   private normalizeLabel(labelName: string | undefined): string {
     return this.labelOptions.some(option => option.name === labelName) ? labelName ?? '' : '';
+  }
+
+  private uploadImage(file: File, target: 'description' | 'comment'): void {
+    if (!file.type.match(/^image\/(jpeg|png|webp|gif)$/)) {
+      this.setImageError(target, 'Formato de imagen no valido.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      this.setImageError(target, 'La imagen no puede superar los 5 MB.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    if (target === 'description') {
+      this.isUploadingDescriptionImage = true;
+      this.descriptionImageError = '';
+    } else {
+      this.isUploadingCommentImage = true;
+      this.commentImageError = '';
+    }
+
+    const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
+
+    this.http.post<UploadImageResponse>(`/api/projects/${this.projectId}/board/uploads/images`, formData, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .pipe(
+        finalize(() => {
+          if (target === 'description') {
+            this.isUploadingDescriptionImage = false;
+          } else {
+            this.isUploadingCommentImage = false;
+          }
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (res) => {
+          this.appendImageMarkdown(target, res.url, file.name);
+        },
+        error: (err) => {
+          this.setImageError(target, err.error?.message ?? 'No se pudo subir la imagen.');
+        },
+      });
+  }
+
+  private appendImageMarkdown(target: 'description' | 'comment', url: string, fileName: string): void {
+    const markdown = `![${fileName}](${url})`;
+
+    if (target === 'description') {
+      this.description = this.appendBlock(this.description, markdown);
+      return;
+    }
+
+    this.newComment = this.appendBlock(this.newComment, markdown);
+  }
+
+  private appendBlock(currentValue: string, block: string): string {
+    const trimmedEnd = currentValue.replace(/\s+$/, '');
+    return trimmedEnd ? `${trimmedEnd}\n\n${block}` : block;
+  }
+
+  private setImageError(target: 'description' | 'comment', message: string): void {
+    if (target === 'description') {
+      this.descriptionImageError = message;
+      return;
+    }
+
+    this.commentImageError = message;
+  }
+
+  private parseImageMarkdown(content: string): ContentSegment[] {
+    const segments: ContentSegment[] = [];
+    const imagePattern = /!\[([^\]]*)\]\(([^)\s]+)\)/g;
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = imagePattern.exec(content)) !== null) {
+      const text = content.slice(lastIndex, match.index);
+      if (text) {
+        segments.push({ type: 'text', value: text });
+      }
+
+      segments.push({ type: 'image', value: match[2], alt: match[1] || 'Imagen adjunta' });
+      lastIndex = imagePattern.lastIndex;
+    }
+
+    const remainingText = content.slice(lastIndex);
+    if (remainingText) {
+      segments.push({ type: 'text', value: remainingText });
+    }
+
+    return segments;
   }
 }

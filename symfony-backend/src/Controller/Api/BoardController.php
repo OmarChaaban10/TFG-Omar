@@ -19,6 +19,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/api/projects/{projectId}/board', name: 'api_board_')]
@@ -312,6 +313,40 @@ class BoardController extends AbstractController
         ], Response::HTTP_CREATED);
     }
 
+    #[Route('/uploads/images', name: 'upload_image', methods: ['POST'])]
+    public function uploadImage(int $projectId, Request $request): JsonResponse
+    {
+        $context = $this->getEditableProjectContext($projectId);
+        if ($context instanceof JsonResponse) {
+            return $context;
+        }
+
+        $file = $request->files->get('image');
+        if (!$file instanceof UploadedFile) {
+            return $this->json(['message' => 'No se ha recibido ninguna imagen.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (!in_array($file->getMimeType(), ['image/jpeg', 'image/png', 'image/webp', 'image/gif'], true)) {
+            return $this->json(['message' => 'Formato de imagen no valido.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($file->getSize() !== false && $file->getSize() > 5 * 1024 * 1024) {
+            return $this->json(['message' => 'La imagen no puede superar los 5 MB.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $extension = $file->guessExtension() ?: 'bin';
+        $filename = sprintf('board_%s.%s', bin2hex(random_bytes(8)), $extension);
+        $uploadDir = dirname(__DIR__, 3) . '/public/uploads/board-images';
+
+        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
+            return $this->json(['message' => 'No se pudo preparar la carpeta de subida.'], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        $file->move($uploadDir, $filename);
+
+        return $this->json(['url' => '/uploads/board-images/' . $filename], Response::HTTP_CREATED);
+    }
+
     #[Route('/columns/{columnId}', name: 'delete_column', methods: ['DELETE'])]
     public function deleteColumn(int $projectId, int $columnId): JsonResponse
     {
@@ -519,8 +554,8 @@ class BoardController extends AbstractController
             return $this->json(['message' => 'El comentario no puede estar vacio.'], Response::HTTP_BAD_REQUEST);
         }
 
-        if (mb_strlen($content) > 1000) {
-            return $this->json(['message' => 'El comentario no puede superar los 1000 caracteres.'], Response::HTTP_BAD_REQUEST);
+        if (mb_strlen($content) > 2000) {
+            return $this->json(['message' => 'El comentario no puede superar los 2000 caracteres.'], Response::HTTP_BAD_REQUEST);
         }
 
         $comment = (new CardComment())
