@@ -74,7 +74,11 @@
             <option [ngValue]="assignee.id">{{ assignee.name }}</option>
             }
           </select>
+          @if (assigneeId !== currentUserId) {
+          <a (click)="assignToMe($event)" class="mt-1.5 block text-blue-500 hover:text-blue-700 cursor-pointer">Asignarme a mí</a>
+          }
         </div>
+
 
         <div>
           <label for="card-priority" class="mb-1.5 block text-xs font-bold uppercase th-text-muted">Prioridad</label>

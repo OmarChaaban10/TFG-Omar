@@ -217,6 +217,6 @@
 
 @if (showCardModal && board) {
 <app-card-modal [projectId]="projectId" [columns]="board.columns" [assignees]="assignees" [card]="selectedCard"
-  [initialColumnId]="selectedColumnId" (closed)="closeCardModal()" (saved)="handleCardSaved()">
+  [initialColumnId]="selectedColumnId" [currentUserId]="currentUserId" (closed)="closeCardModal()" (saved)="handleCardSaved()">
 </app-card-modal>
 }

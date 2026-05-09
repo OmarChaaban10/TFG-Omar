@@ -20,6 +20,7 @@ export class CardModalComponent implements OnChanges {
   @Input({ required: true }) assignees: Assignee[] = [];
   @Input() card: Card | null = null;
   @Input() initialColumnId = 0;
+  @Input() currentUserId: number | null = null;
 
   @Output() closed = new EventEmitter<void>();
   @Output() saved = new EventEmitter<void>();
@@ -101,6 +102,13 @@ export class CardModalComponent implements OnChanges {
           this.error = err.error?.message ?? 'No se pudo guardar la tarea.';
         },
       });
+  }
+
+  assignToMe(event: Event): void {
+    event.preventDefault();
+    if (this.currentUserId !== null && this.currentUserId !== undefined) {
+      this.assigneeId = this.currentUserId;
+    }
   }
 
   private resetForm(): void {
