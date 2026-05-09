@@ -1,0 +1,108 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
+  <button type="button" class="absolute inset-0 bg-black/70 backdrop-blur-sm cursor-default" aria-label="Cerrar modal"
+    (click)="close()"></button>
+
+  <section class="relative flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl border th-card th-border shadow-2xl shadow-black/40">
+    <header class="flex items-center justify-between gap-4 border-b th-border px-4 py-4 sm:px-6">
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-3">
+          @if (isEditing) {
+          <span class="rounded-md bg-blue-500/20 px-3 py-1 text-xs font-bold text-blue-400">CARD-{{ card?.id }}</span>
+          }
+          <h2 class="wrap-break-words text-lg font-bold th-text-heading sm:text-xl">
+            {{ isEditing ? 'Detalle de tarjeta' : 'Nueva tarjeta' }}
+          </h2>
+        </div>
+        <p class="mt-1 text-sm th-text-muted">Título, responsable, estado, prioridad, fecha y etiquetas</p>
+      </div>
+
+      <button type="button" (click)="close()"
+        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-500/10 text-red-400 transition hover:bg-red-500/20 cursor-pointer">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </header>
+
+    <div class="grid min-h-0 flex-1 overflow-y-auto md:grid-cols-[minmax(0,1fr)_340px]">
+      <div class="space-y-5 border-b th-border p-4 md:border-b-0 md:border-r sm:p-6">
+        @if (error) {
+        <div class="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          {{ error }}
+        </div>
+        }
+
+        <div>
+          <label for="card-title" class="mb-1.5 block text-xs font-bold uppercase th-text-muted">Título</label>
+          <input id="card-title" type="text" [(ngModel)]="title" maxlength="255"
+            class="w-full rounded-lg border th-input px-4 py-3 text-sm font-semibold outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            placeholder="Nombre de la tarea" />
+        </div>
+
+        <div>
+          <label for="card-description" class="mb-1.5 block text-xs font-bold uppercase th-text-muted">Descripción</label>
+          <textarea id="card-description" [(ngModel)]="description" rows="6"
+            class="w-full resize-none rounded-lg border th-input px-4 py-3 text-sm outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            placeholder="Describe la tarea..."></textarea>
+        </div>
+
+        <div>
+          <label for="card-labels" class="mb-1.5 block text-xs font-bold uppercase th-text-muted">Etiquetas</label>
+          <input id="card-labels" type="text" [(ngModel)]="labelsText"
+            class="w-full rounded-lg border th-input px-4 py-3 text-sm outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+            placeholder="Frontend, Angular, UI" />
+        </div>
+      </div>
+
+      <aside class="space-y-5 p-4 sm:p-6">
+        <div>
+          <label for="card-column" class="mb-1.5 block text-xs font-bold uppercase th-text-muted">Estado</label>
+          <select id="card-column" [(ngModel)]="columnId"
+            class="w-full rounded-lg border th-input px-3 py-2.5 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500">
+            @for (column of columns; track column.id) {
+            <option [ngValue]="column.id">{{ column.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label for="card-assignee" class="mb-1.5 block text-xs font-bold uppercase th-text-muted">Asignado a</label>
+          <select id="card-assignee" [(ngModel)]="assigneeId"
+            class="w-full rounded-lg border th-input px-3 py-2.5 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500">
+            <option [ngValue]="null">Sin asignar</option>
+            @for (assignee of assignees; track assignee.id) {
+            <option [ngValue]="assignee.id">{{ assignee.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div>
+          <label for="card-priority" class="mb-1.5 block text-xs font-bold uppercase th-text-muted">Prioridad</label>
+          <select id="card-priority" [(ngModel)]="priority"
+            class="w-full rounded-lg border th-input px-3 py-2.5 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500">
+            <option value="low">Baja</option>
+            <option value="medium">Media</option>
+            <option value="high">Alta</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="card-due-date" class="mb-1.5 block text-xs font-bold uppercase th-text-muted">Fecha límite</label>
+          <input id="card-due-date" type="date" [(ngModel)]="dueDate"
+            class="w-full rounded-lg border th-input px-3 py-2.5 text-sm outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500" />
+        </div>
+      </aside>
+    </div>
+
+    <footer class="flex flex-col-reverse gap-3 border-t th-border px-4 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6">
+      <button type="button" (click)="close()"
+        class="rounded-lg px-5 py-2 text-sm font-medium text-slate-400 transition hover:bg-slate-800/50 hover:text-white cursor-pointer">
+        Cancelar
+      </button>
+      <button type="button" (click)="save()" [disabled]="isSaving"
+        class="rounded-lg bg-orange-500 px-6 py-2 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer">
+        {{ isSaving ? 'Guardando...' : (isEditing ? 'Guardar cambios' : 'Crear tarea') }}
+      </button>
+    </footer>
+  </section>
+</div>

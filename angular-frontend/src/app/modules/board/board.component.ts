@@ -7,6 +7,7 @@ import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ThemeToggleComponent } from '../shared/theme-toggle/theme-toggle.component';
+import { CardModalComponent } from './card-modal/card-modal.component';
 
 export interface Label {
   id: number;
@@ -48,6 +49,7 @@ export interface Board {
 interface BoardResponse {
   board: Board;
   currentUserId: number;
+  assignees: Assignee[];
 }
 
 type BoardFilter = 'highPriority' | 'myTasks' | 'thisWeek';
@@ -60,7 +62,7 @@ interface SelectedBoardProject {
 @Component({
   selector: 'app-board',
   standalone: true,
-  imports: [CommonModule, DragDropModule, FormsModule, ThemeToggleComponent],
+  imports: [CommonModule, DragDropModule, FormsModule, ThemeToggleComponent, CardModalComponent],
   templateUrl: './board.component.html'
 })
 export class BoardComponent implements OnInit {
@@ -68,9 +70,13 @@ export class BoardComponent implements OnInit {
   projectName = '';
   board: Board | null = null;
   currentUserId: number | null = null;
+  assignees: Assignee[] = [];
   isLoading = false;
   error = '';
   searchQuery = '';
+  showCardModal = false;
+  selectedCard: Card | null = null;
+  selectedColumnId = 0;
   activeFilters: Record<BoardFilter, boolean> = {
     highPriority: false,
     myTasks: false,
@@ -163,6 +169,7 @@ export class BoardComponent implements OnInit {
         next: (res) => {
           this.board = res.board;
           this.currentUserId = res.currentUserId;
+          this.assignees = res.assignees;
           if (!this.projectName) {
             this.projectName = res.board.name;
           }
@@ -185,6 +192,35 @@ export class BoardComponent implements OnInit {
     localStorage.removeItem('jwt_token');
     sessionStorage.removeItem('jwt_token');
     this.router.navigate(['/']);
+  }
+
+  openCreateCardModal(column: BoardColumn): void {
+    this.selectedCard = null;
+    this.selectedColumnId = column.id;
+    this.showCardModal = true;
+  }
+
+  openEditCardModal(card: Card): void {
+    this.selectedCard = card;
+    this.selectedColumnId = this.getColumnIdForCard(card.id);
+    this.showCardModal = true;
+  }
+
+  closeCardModal(): void {
+    this.showCardModal = false;
+    this.selectedCard = null;
+    this.selectedColumnId = 0;
+  }
+
+  handleCardSaved(): void {
+    this.closeCardModal();
+    this.fetchBoard();
+  }
+
+  private getColumnIdForCard(cardId: number): number {
+    return this.board?.columns.find(column =>
+      column.cards.some(card => card.id === cardId)
+    )?.id ?? 0;
   }
 
   drop(event: CdkDragDrop<Card[]>): void {

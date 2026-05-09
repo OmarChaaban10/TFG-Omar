@@ -7,9 +7,11 @@ namespace App\Controller\Api;
 use App\Entity\Board;
 use App\Entity\BoardColumn;
 use App\Entity\Card;
+use App\Entity\Label;
 use App\Entity\Project;
 use App\Entity\ProjectMember;
 use App\Entity\User;
+use App\Enum\CardPriority;
 use App\Service\ProjectLogService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -121,7 +123,68 @@ class BoardController extends AbstractController
         return $this->json([
             'board' => $boardData,
             'currentUserId' => $user->getId(),
+            'assignees' => $this->serializeProjectAssignees($project),
         ]);
+    }
+
+    /** @return array<int, array{id: int|null, name: string, avatarUrl: string|null}> */
+    private function serializeProjectAssignees(Project $project): array
+    {
+        $assignees = [];
+        $owner = $project->getOwner();
+
+        if ($owner instanceof User) {
+            $assignees[$owner->getId()] = [
+                'id' => $owner->getId(),
+                'name' => $owner->getName(),
+                'avatarUrl' => $owner->getAvatarUrl(),
+            ];
+        }
+
+        foreach ($project->getMemberships() as $membership) {
+            $member = $membership->getUser();
+            if (!$member instanceof User) {
+                continue;
+            }
+
+            $assignees[$member->getId()] = [
+                'id' => $member->getId(),
+                'name' => $member->getName(),
+                'avatarUrl' => $member->getAvatarUrl(),
+            ];
+        }
+
+        return array_values($assignees);
+    }
+
+    /** @return array<string, mixed> */
+    private function serializeCard(Card $card): array
+    {
+        $labels = [];
+        foreach ($card->getLabels() as $label) {
+            $labels[] = [
+                'id' => $label->getId(),
+                'name' => $label->getName(),
+                'color' => $label->getColor(),
+            ];
+        }
+
+        $assignee = $card->getAssignee();
+
+        return [
+            'id' => $card->getId(),
+            'title' => $card->getTitle(),
+            'description' => $card->getDescription(),
+            'priority' => $card->getPriority()->value,
+            'position' => $card->getPosition(),
+            'dueDate' => $card->getDueDate() ? $card->getDueDate()->format('c') : null,
+            'assignee' => $assignee instanceof User ? [
+                'id' => $assignee->getId(),
+                'name' => $assignee->getName(),
+                'avatarUrl' => $assignee->getAvatarUrl(),
+            ] : null,
+            'labels' => $labels,
+        ];
     }
 
     private function createDefaultBoard(Project $project): Board
@@ -150,6 +213,217 @@ class BoardController extends AbstractController
         $this->em->persist($board);
 
         return $board;
+    }
+
+    #[Route('/columns/{columnId}/cards', name: 'create_card', methods: ['POST'])]
+    public function createCard(int $projectId, int $columnId, Request $request): JsonResponse
+    {
+        $context = $this->getEditableProjectContext($projectId);
+        if ($context instanceof JsonResponse) {
+            return $context;
+        }
+
+        ['project' => $project, 'user' => $user] = $context;
+
+        $column = $this->em->getRepository(BoardColumn::class)->find($columnId);
+        if (!$column || $column->getBoard()->getProject() !== $project) {
+            return $this->json(['message' => 'Columna no encontrada.'], Response::HTTP_NOT_FOUND);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        if (!is_array($data)) {
+            return $this->json(['message' => 'Solicitud invalida.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $title = trim((string) ($data['title'] ?? ''));
+        if ($title === '') {
+            return $this->json(['message' => 'El titulo de la tarea es obligatorio.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (mb_strlen($title) > 255) {
+            return $this->json(['message' => 'El titulo no puede superar los 255 caracteres.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $position = $this->em->getRepository(Card::class)->count(['column' => $column]);
+
+        $card = (new Card())
+            ->setColumn($column)
+            ->setTitle($title)
+            ->setPosition($position);
+
+        $this->applyCardData($card, $project, $data);
+
+        $this->em->persist($card);
+        $this->em->flush();
+
+        $this->logService->logAction(
+            $project,
+            $user,
+            'task_created',
+            sprintf('Creó la tarea "%s".', $card->getTitle())
+        );
+
+        return $this->json(['card' => $this->serializeCard($card)], Response::HTTP_CREATED);
+    }
+
+    #[Route('/cards/{cardId}', name: 'update_card', methods: ['PUT'])]
+    public function updateCard(int $projectId, int $cardId, Request $request): JsonResponse
+    {
+        $context = $this->getEditableProjectContext($projectId);
+        if ($context instanceof JsonResponse) {
+            return $context;
+        }
+
+        ['project' => $project, 'user' => $user] = $context;
+
+        $card = $this->em->getRepository(Card::class)->find($cardId);
+        if (!$card || $card->getColumn()->getBoard()->getProject() !== $project) {
+            return $this->json(['message' => 'Tarjeta no encontrada.'], Response::HTTP_NOT_FOUND);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        if (!is_array($data)) {
+            return $this->json(['message' => 'Solicitud invalida.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $title = trim((string) ($data['title'] ?? ''));
+        if ($title === '') {
+            return $this->json(['message' => 'El titulo de la tarea es obligatorio.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (mb_strlen($title) > 255) {
+            return $this->json(['message' => 'El titulo no puede superar los 255 caracteres.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $targetColumnId = (int) ($data['columnId'] ?? 0);
+        if ($targetColumnId > 0 && $targetColumnId !== $card->getColumn()->getId()) {
+            $targetColumn = $this->em->getRepository(BoardColumn::class)->find($targetColumnId);
+            if (!$targetColumn || $targetColumn->getBoard()->getProject() !== $project) {
+                return $this->json(['message' => 'Columna destino no encontrada.'], Response::HTTP_NOT_FOUND);
+            }
+
+            $oldColumn = $card->getColumn();
+            $newPosition = $this->em->getRepository(Card::class)->count(['column' => $targetColumn]);
+            $card->setColumn($targetColumn);
+            $card->setPosition($newPosition);
+            $this->reindexColumnCards($oldColumn);
+        }
+
+        $card->setTitle($title);
+        $this->applyCardData($card, $project, $data);
+
+        $this->em->flush();
+
+        $this->logService->logAction(
+            $project,
+            $user,
+            'task_updated',
+            sprintf('Actualizó la tarea "%s".', $card->getTitle())
+        );
+
+        return $this->json(['card' => $this->serializeCard($card)]);
+    }
+
+    /** @return array{project: Project, user: User}|JsonResponse */
+    private function getEditableProjectContext(int $projectId): array|JsonResponse
+    {
+        /** @var User|null $user */
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return $this->json(['message' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $project = $this->em->getRepository(Project::class)->find($projectId);
+        if (!$project) {
+            return $this->json(['message' => 'Proyecto no encontrado.'], Response::HTTP_NOT_FOUND);
+        }
+
+        if ($project->getOwner() !== $user) {
+            $membership = $this->em->getRepository(ProjectMember::class)
+                ->findOneBy(['project' => $project, 'user' => $user]);
+            if (!$membership) {
+                return $this->json(['message' => 'No tienes permisos para editar este tablero.'], Response::HTTP_FORBIDDEN);
+            }
+        }
+
+        return ['project' => $project, 'user' => $user];
+    }
+
+    /** @param array<string, mixed> $data */
+    private function applyCardData(Card $card, Project $project, array $data): void
+    {
+        $description = trim((string) ($data['description'] ?? ''));
+        $card->setDescription($description !== '' ? $description : null);
+
+        $priority = (string) ($data['priority'] ?? CardPriority::MEDIUM->value);
+        $card->setPriority(CardPriority::tryFrom($priority) ?? CardPriority::MEDIUM);
+
+        $dueDate = trim((string) ($data['dueDate'] ?? ''));
+        $card->setDueDate($dueDate !== '' ? \DateTimeImmutable::createFromFormat('!Y-m-d', $dueDate) ?: null : null);
+
+        $assigneeId = (int) ($data['assigneeId'] ?? 0);
+        if ($assigneeId > 0) {
+            $assignee = $this->em->getRepository(User::class)->find($assigneeId);
+            $card->setAssignee($assignee instanceof User && $this->userBelongsToProject($project, $assignee) ? $assignee : null);
+        } else {
+            $card->setAssignee(null);
+        }
+
+        foreach ($card->getLabels()->toArray() as $label) {
+            $card->removeLabel($label);
+        }
+
+        $labels = $data['labels'] ?? [];
+        if (!is_array($labels)) {
+            return;
+        }
+
+        $labelColors = ['#8B5CF6', '#3B82F6', '#10B981', '#F97316', '#EF4444'];
+        $index = 0;
+
+        foreach ($labels as $labelName) {
+            $name = trim((string) $labelName);
+            if ($name === '') {
+                continue;
+            }
+
+            $label = $this->em->getRepository(Label::class)->findOneBy(['name' => $name]);
+            if (!$label instanceof Label) {
+                $label = (new Label())
+                    ->setName($name)
+                    ->setColor($labelColors[$index % count($labelColors)]);
+                $this->em->persist($label);
+            }
+
+            $card->addLabel($label);
+            $index++;
+        }
+    }
+
+    private function userBelongsToProject(Project $project, User $user): bool
+    {
+        if ($project->getOwner() === $user) {
+            return true;
+        }
+
+        return (bool) $this->em->getRepository(ProjectMember::class)->findOneBy([
+            'project' => $project,
+            'user' => $user,
+        ]);
+    }
+
+    private function reindexColumnCards(BoardColumn $column): void
+    {
+        $cards = $this->em->getRepository(Card::class)->findBy(
+            ['column' => $column],
+            ['position' => 'ASC']
+        );
+
+        $position = 0;
+        foreach ($cards as $card) {
+            $card->setPosition($position);
+            $position++;
+        }
     }
 
     #[Route('/cards/{cardId}/move', name: 'move_card', methods: ['PUT'])]
