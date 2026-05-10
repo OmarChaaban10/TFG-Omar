@@ -1,8 +1,10 @@
 import { Component, OnInit, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs/operators';
+import { InviteMemberModalComponent } from '../invite-member-modal/invite-member-modal.component';
 
 interface ProjectMemberDetail {
   id: number;
@@ -15,52 +17,64 @@ interface ProjectMemberDetail {
 interface ProjectFull {
   id: number;
   name: string;
+  description: string | null;
   color: string | null;
+  myRole: string;
+  progress: number;
+  totalTasks: number;
+  doneTasks: number;
   members: ProjectMemberDetail[];
-}
-
-interface SharedProject {
-  id: number;
-  name: string;
-  color: string | null;
-  roleInProject: string;
-}
-
-interface MemberFull {
-  id: number;
-  name: string;
-  email: string;
-  avatarUrl: string | null;
-  sharedProjects: SharedProject[];
+  createdAt: string;
 }
 
 @Component({
   selector: 'app-members',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule, InviteMemberModalComponent],
   templateUrl: './members.component.html',
 })
 export class MembersComponent implements OnInit {
-  allMembers: MemberFull[] = [];
+  projects: ProjectFull[] = [];
+  selectedProjectId = 0;
+  currentUserId: number | null = null;
   isLoadingMembers = false;
   membersError = '';
-  expandedMemberIds: Set<number> = new Set();
+  actionError = '';
+  showInviteModal = false;
+  memberPendingRemoval: ProjectMemberDetail | null = null;
+  isRemovingMember = false;
+  updatingRoleMemberIds = new Set<number>();
 
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
 
   ngOnInit(): void {
-    this.fetchAllMembers();
+    this.fetchProjects();
   }
 
-  fetchAllMembers(): void {
+  get selectedProject(): ProjectFull | null {
+    return this.projects.find(project => project.id === this.selectedProjectId) ?? null;
+  }
+
+  get canManageSelectedProject(): boolean {
+    const project = this.selectedProject;
+    if (!project) return false;
+
+    return project.myRole === 'Admin';
+  }
+
+  get projectMembers(): ProjectMemberDetail[] {
+    return this.selectedProject?.members ?? [];
+  }
+
+  fetchProjects(): void {
     this.isLoadingMembers = true;
     this.membersError = '';
+    this.actionError = '';
 
     const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
 
-    // Usamos el endpoint de proyectos para extraer los miembros con los que compartimos proyectos
-    this.http.get<{ projects: ProjectFull[] }>('/api/projects/all', {
+    this.http.get<{ projects: ProjectFull[]; currentUserId: number }>('/api/projects/all', {
       headers: { Authorization: `Bearer ${token}` }
     })
       .pipe(
@@ -69,7 +83,11 @@ export class MembersComponent implements OnInit {
       )
       .subscribe({
         next: (res) => {
-          this.processMembers(res.projects);
+          this.projects = res.projects;
+          this.currentUserId = res.currentUserId;
+          if (!this.selectedProjectId || !this.projects.some(project => project.id === this.selectedProjectId)) {
+            this.selectedProjectId = this.projects[0]?.id ?? 0;
+          }
         },
         error: () => {
           this.membersError = 'No se pudieron cargar los miembros.';
@@ -77,43 +95,109 @@ export class MembersComponent implements OnInit {
       });
   }
 
-  processMembers(projects: ProjectFull[]): void {
-    const membersMap = new Map<number, MemberFull>();
+  openInviteModal(): void {
+    if (!this.canManageSelectedProject) return;
 
-    for (const project of projects) {
-      for (const member of project.members) {
-        if (!membersMap.has(member.id)) {
-          membersMap.set(member.id, {
-            id: member.id,
-            name: member.name,
-            email: member.email,
-            avatarUrl: member.avatarUrl,
-            sharedProjects: []
-          });
+    this.showInviteModal = true;
+  }
+
+  closeInviteModal(): void {
+    this.showInviteModal = false;
+  }
+
+  handleMemberInvited(): void {
+    this.fetchProjects();
+  }
+
+  openRemoveConfirm(member: ProjectMemberDetail): void {
+    if (!this.canEditMember(member)) return;
+
+    this.memberPendingRemoval = member;
+    this.actionError = '';
+  }
+
+  closeRemoveConfirm(): void {
+    if (this.isRemovingMember) return;
+
+    this.memberPendingRemoval = null;
+  }
+
+  removePendingMember(): void {
+    const project = this.selectedProject;
+    const member = this.memberPendingRemoval;
+    if (!project || !member || this.isRemovingMember) return;
+
+    this.isRemovingMember = true;
+    this.actionError = '';
+
+    const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
+
+    this.http.delete(`/api/projects/${project.id}/members/${member.id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .pipe(
+        finalize(() => { this.isRemovingMember = false; }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => {
+          this.memberPendingRemoval = null;
+          this.fetchProjects();
+        },
+        error: (err) => {
+          this.actionError = err.error?.message ?? 'No se pudo eliminar al miembro.';
         }
-        membersMap.get(member.id)!.sharedProjects.push({
-          id: project.id,
-          name: project.name,
-          color: project.color,
-          roleInProject: member.role
-        });
-      }
-    }
-
-    // Ordenar miembros por nombre alfabéticamente
-    this.allMembers = Array.from(membersMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+      });
   }
 
-  toggleMemberExpand(memberId: number): void {
-    if (this.expandedMemberIds.has(memberId)) {
-      this.expandedMemberIds.delete(memberId);
-    } else {
-      this.expandedMemberIds.add(memberId);
-    }
+  updateMemberRole(member: ProjectMemberDetail, role: string): void {
+    const project = this.selectedProject;
+    if (!project || !this.canEditMember(member) || member.role === role) return;
+
+    this.updatingRoleMemberIds.add(member.id);
+    this.actionError = '';
+
+    const previousRole = member.role;
+    member.role = role;
+
+    const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
+
+    this.http.put(`/api/projects/${project.id}/members/${member.id}/role`,
+      { role },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+      .pipe(
+        finalize(() => { this.updatingRoleMemberIds.delete(member.id); }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => {
+          this.fetchProjects();
+        },
+        error: (err) => {
+          member.role = previousRole;
+          this.actionError = err.error?.message ?? 'No se pudo actualizar el rol.';
+        }
+      });
   }
 
-  isMemberExpanded(memberId: number): boolean {
-    return this.expandedMemberIds.has(memberId);
+  canEditMember(member: ProjectMemberDetail): boolean {
+    return this.canManageSelectedProject
+      && member.role !== 'owner'
+      && member.id !== this.currentUserId;
+  }
+
+  isUpdatingRole(memberId: number): boolean {
+    return this.updatingRoleMemberIds.has(memberId);
+  }
+
+  getInitials(name: string): string {
+    return name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map(part => part.charAt(0).toUpperCase())
+      .join('');
   }
 
   getRoleLabelClass(role: string): string {

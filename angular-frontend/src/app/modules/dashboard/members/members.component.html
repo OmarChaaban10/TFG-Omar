@@ -1,122 +1,241 @@
-<div class="mb-6">
-  <h2 class="text-2xl font-bold text-white tracking-wide font-ui">Directorio de Miembros</h2>
-  <p class="text-slate-400 mt-1">Personas con las que compartes proyectos</p>
+<div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+  <div>
+    <h2 class="text-2xl font-bold th-text-heading tracking-wide font-ui">Gestión de Usuarios y Roles</h2>
+    <p class="th-text-muted mt-1">Administra miembros por proyecto y sus permisos de colaboración</p>
+  </div>
+
+  @if (projects.length > 0) {
+  <div class="w-full lg:w-96">
+    <label for="members-project" class="mb-1.5 block text-xs font-bold uppercase th-text-muted">Proyecto</label>
+    <select id="members-project" [(ngModel)]="selectedProjectId"
+      class="th-input w-full rounded-lg border px-4 py-2.5 text-sm font-medium outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500">
+      @for (project of projects; track project.id) {
+      <option [ngValue]="project.id">{{ project.name }}</option>
+      }
+    </select>
+  </div>
+  }
 </div>
 
-<!-- Error -->
 @if (membersError && !isLoadingMembers) {
-<div class="mb-6 flex items-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg px-4 py-3">
-  <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<div class="mb-6 flex items-center gap-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-red-400">
+  <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
       d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
   </svg>
   <span>{{ membersError }}</span>
-  <button (click)="fetchAllMembers()"
-    class="ml-auto text-xs underline hover:text-red-300 transition cursor-pointer">Reintentar</button>
+  <button type="button" (click)="fetchProjects()" class="ml-auto text-xs underline transition hover:text-red-300 cursor-pointer">
+    Reintentar
+  </button>
 </div>
 }
 
-<!-- Loading -->
+@if (actionError) {
+<div class="mb-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+  {{ actionError }}
+</div>
+}
+
 @if (isLoadingMembers) {
 <div class="space-y-4">
   @for (i of [1,2,3,4]; track i) {
-  <div class="th-card border border-slate-700/50 rounded-lg p-6 animate-pulse">
-    <div class="flex items-center gap-4">
-      <div class="w-10 h-10 rounded-full bg-slate-700/60"></div>
-      <div class="flex-1">
-        <div class="h-4 w-48 bg-slate-700/60 rounded mb-2"></div>
-        <div class="h-3 w-32 bg-slate-800/60 rounded"></div>
-      </div>
-    </div>
+  <div class="th-card th-border animate-pulse rounded-lg border p-6">
+    <div class="h-5 w-56 rounded bg-slate-700/60 mb-3"></div>
+    <div class="h-3 w-40 rounded bg-slate-800/60"></div>
   </div>
   }
 </div>
 }
 
-<!-- Members list -->
 @if (!isLoadingMembers && !membersError) {
-
-@if (allMembers.length === 0) {
-<div class="th-card border border-dashed border-slate-700 rounded-lg p-8 text-center">
-  <svg class="w-12 h-12 mx-auto text-slate-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+@if (projects.length === 0) {
+<div class="th-card rounded-lg border border-dashed border-slate-700 p-8 text-center">
+  <svg class="mx-auto mb-3 h-12 w-12 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
       d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
   </svg>
-  <p class="text-slate-500">Aún no compartes proyectos con nadie.</p>
+  <p class="text-slate-500">Aún no participas en ningún proyecto.</p>
 </div>
-}
+} @else if (selectedProject) {
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-  @for (member of allMembers; track member.id) {
-  <div class="th-card border border-slate-700 rounded-lg overflow-hidden transition-all flex flex-col">
-    <!-- Member header (clickable to expand) -->
-    <button (click)="toggleMemberExpand(member.id)"
-      class="w-full p-5 flex items-center justify-between gap-4 text-left cursor-pointer hover:bg-slate-800/30 transition">
-      <div class="flex items-center gap-4 flex-1 min-w-0">
-        <!-- Avatar -->
-        <div
-          class="w-10 h-10 rounded-full overflow-hidden shrink-0 flex items-center justify-center border border-slate-600"
-          [class.bg-amber-500/20]="member.sharedProjects[0]?.roleInProject === 'owner'"
-          [class.bg-blue-500/20]="member.sharedProjects[0]?.roleInProject !== 'owner'">
-          @if (member.avatarUrl) {
-          <img [src]="member.avatarUrl" [alt]="member.name" class="w-full h-full object-cover">
-          } @else {
-          <span class="font-bold text-sm" [class.text-amber-400]="member.sharedProjects[0]?.roleInProject === 'owner'"
-            [class.text-blue-400]="member.sharedProjects[0]?.roleInProject !== 'owner'">
-            {{ member.name.charAt(0).toUpperCase() }}
-          </span>
-          }
-        </div>
-        <div class="min-w-0">
-          <h3 class="text-white font-semibold text-base truncate">{{ member.name }}</h3>
-          <p class="text-slate-400 text-sm mt-0.5 truncate">{{ member.email }}</p>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-4 shrink-0">
-        <!-- Projects count -->
-        <div
-          class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-xs font-medium">
-          <svg class="w-3.5 h-3.5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M3 7a2 2 0 012-2h3l2 2h7a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
-          </svg>
-          {{ member.sharedProjects.length }}
-        </div>
-
-        <!-- Expand chevron -->
-        <svg class="w-5 h-5 text-slate-400 transition-transform" [class.rotate-180]="isMemberExpanded(member.id)"
-          fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
-      </div>
-    </button>
-
-    <!-- Expanded: Projects list -->
-    @if (isMemberExpanded(member.id)) {
-    <div class="border-t border-slate-700 th-expanded bg-slate-900/50 flex-1">
-      <div class="px-5 py-3">
-        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Proyectos en común</h4>
-        <div class="space-y-2">
-          @for (project of member.sharedProjects; track project.id) {
-          <div
-            class="flex items-center justify-between px-3 py-2.5 rounded-lg bg-slate-800/40 border border-slate-700/50 hover:border-slate-600 transition">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="w-2.5 h-2.5 rounded-full shrink-0" [style.backgroundColor]="project.color || '#f97316'"></div>
-              <p class="text-sm font-medium text-slate-200 truncate">{{ project.name }}</p>
-            </div>
-            <!-- Role badge -->
-            <span class="text-[10px] px-2 py-0.5 rounded font-medium ml-2 shrink-0"
-              [ngClass]="getRoleLabelClass(project.roleInProject)">
-              {{ getRoleLabel(project.roleInProject) }}
-            </span>
-          </div>
-          }
-        </div>
-      </div>
+<div class="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-3">
+  <section class="th-card rounded-lg border border-purple-500 p-5 shadow-lg">
+    <div class="mb-3 flex items-center gap-2">
+      <span class="h-3 w-3 rounded-full bg-purple-500"></span>
+      <h3 class="font-bold th-text-heading">Propietario</h3>
     </div>
+    <p class="text-sm th-text-muted">Control total del proyecto, miembros, roles y configuración.</p>
+    <div class="mt-5 grid grid-cols-2 gap-2 text-xs th-text-muted">
+      <span>Invitar usuarios</span>
+      <span>Editar roles</span>
+      <span>Eliminar miembros</span>
+      <span>Gestionar tablero</span>
+    </div>
+  </section>
+
+  <section class="th-card rounded-lg border border-blue-500 p-5 shadow-lg">
+    <div class="mb-3 flex items-center gap-2">
+      <span class="h-3 w-3 rounded-full bg-blue-500"></span>
+      <h3 class="font-bold th-text-heading">Admin de Proyecto</h3>
+    </div>
+    <p class="text-sm th-text-muted">Puede gestionar equipo, roles y el trabajo del proyecto.</p>
+    <div class="mt-5 grid grid-cols-2 gap-2 text-xs th-text-muted">
+      <span>Invitar usuarios</span>
+      <span>Editar roles</span>
+      <span>Eliminar miembros</span>
+      <span>Gestionar tareas</span>
+    </div>
+  </section>
+
+  <section class="th-card rounded-lg border border-emerald-500 p-5 shadow-lg">
+    <div class="mb-3 flex items-center gap-2">
+      <span class="h-3 w-3 rounded-full bg-emerald-500"></span>
+      <h3 class="font-bold th-text-heading">Miembro</h3>
+    </div>
+    <p class="text-sm th-text-muted">Colabora en las tareas y participa en el tablero asignado.</p>
+    <div class="mt-5 grid grid-cols-2 gap-2 text-xs th-text-muted">
+      <span>Crear tarjetas</span>
+      <span>Mover tarjetas</span>
+      <span>Comentar</span>
+      <span>Ver tablero</span>
+    </div>
+  </section>
+</div>
+
+<div class="th-card th-border overflow-hidden rounded-xl border shadow-lg">
+  <div class="flex flex-col gap-4 border-b th-border px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+    <div class="min-w-0">
+      <div class="flex items-center gap-2">
+        <span class="h-3 w-3 rounded-full" [style.backgroundColor]="selectedProject.color || '#f97316'"></span>
+        <h3 class="truncate text-lg font-bold th-text-heading">{{ selectedProject.name }}</h3>
+      </div>
+      <p class="mt-1 text-sm th-text-muted">
+        {{ projectMembers.length }} integrante(s) · Tu rol: {{ selectedProject.myRole }}
+      </p>
+    </div>
+
+    @if (canManageSelectedProject) {
+    <button type="button" (click)="openInviteModal()"
+      class="flex items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600 cursor-pointer">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M18 9v3m0 0v3m0-3h3m-3 0h-3M7 11a4 4 0 100-8 4 4 0 000 8zm0 2c-2.67 0-5 1.34-5 3v1h10v-1c0-1.66-2.33-3-5-3z" />
+      </svg>
+      Invitar miembro
+    </button>
+    } @else {
+    <span class="rounded-lg border th-border px-3 py-2 text-sm th-text-muted">Solo admins y propietarios pueden gestionar miembros</span>
     }
   </div>
-  }
+
+  <div class="overflow-x-auto">
+    <table class="w-full min-w-[880px] text-left">
+      <thead class="th-expanded">
+        <tr class="text-xs font-bold uppercase th-text-muted">
+          <th class="px-5 py-4">Usuario</th>
+          <th class="px-5 py-4">Email</th>
+          <th class="px-5 py-4">Rol en proyecto</th>
+          <th class="px-5 py-4">Estado</th>
+          <th class="px-5 py-4 text-right">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (member of projectMembers; track member.id; let rowIndex = $index) {
+        <tr class="border-t th-border transition hover:bg-slate-800/30" [class.th-expanded]="rowIndex % 2 === 0">
+          <td class="px-5 py-4">
+            <div class="flex items-center gap-3">
+              <div class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-600"
+                [class.bg-amber-500/20]="member.role === 'owner'" [class.bg-blue-500/20]="member.role !== 'owner'">
+                @if (member.avatarUrl) {
+                <img [src]="member.avatarUrl" [alt]="member.name" class="h-full w-full object-cover">
+                } @else {
+                <span class="text-xs font-bold" [class.text-amber-400]="member.role === 'owner'"
+                  [class.text-blue-400]="member.role !== 'owner'">{{ getInitials(member.name) }}</span>
+                }
+              </div>
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold th-text-heading">{{ member.name }}</p>
+                @if (member.id === currentUserId) {
+                <p class="text-xs th-text-muted">Tú</p>
+                }
+              </div>
+            </div>
+          </td>
+          <td class="px-5 py-4 text-sm th-text-muted">{{ member.email }}</td>
+          <td class="px-5 py-4">
+            @if (canEditMember(member)) {
+            <select [ngModel]="member.role" (ngModelChange)="updateMemberRole(member, $event)"
+              [disabled]="isUpdatingRole(member.id)"
+              class="th-input rounded-lg border px-3 py-2 text-sm font-medium outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60">
+              <option value="member">Miembro</option>
+              <option value="admin">Admin</option>
+            </select>
+            } @else {
+            <span class="rounded-md px-2.5 py-1 text-xs font-bold" [ngClass]="getRoleLabelClass(member.role)">
+              {{ getRoleLabel(member.role) }}
+            </span>
+            }
+          </td>
+          <td class="px-5 py-4">
+            <span class="inline-flex items-center gap-2 text-sm th-text-muted">
+              <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+              Activo
+            </span>
+          </td>
+          <td class="px-5 py-4">
+            <div class="flex justify-end gap-2">
+              @if (canEditMember(member)) {
+              <button type="button" (click)="openRemoveConfirm(member)"
+                class="rounded-lg bg-red-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-red-600 cursor-pointer">
+                Quitar
+              </button>
+              } @else {
+              <span class="px-4 py-2 text-sm th-text-muted">Sin acciones</span>
+              }
+            </div>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+}
+}
+
+@if (showInviteModal && selectedProject) {
+<app-invite-member-modal [initialProjectId]="selectedProject.id" (closed)="closeInviteModal()" (memberInvited)="handleMemberInvited()">
+</app-invite-member-modal>
+}
+
+@if (memberPendingRemoval) {
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <button type="button" class="absolute inset-0 bg-black/70 backdrop-blur-sm cursor-default"
+    aria-label="Cerrar confirmación" (click)="closeRemoveConfirm()"></button>
+
+  <section class="relative w-full max-w-md overflow-hidden rounded-xl border th-card th-border shadow-2xl shadow-black/40">
+    <header class="border-b th-border px-5 py-4">
+      <h2 class="text-lg font-bold th-text-heading">Quitar miembro</h2>
+      <p class="mt-1 text-sm th-text-muted">El usuario perderá el acceso a este proyecto.</p>
+    </header>
+
+    <div class="px-5 py-4">
+      <p class="text-sm th-text-secondary">
+        ¿Quieres quitar a <span class="font-bold th-text-heading">{{ memberPendingRemoval.name }}</span> de
+        <span class="font-bold th-text-heading">{{ selectedProject?.name }}</span>?
+      </p>
+    </div>
+
+    <footer class="flex flex-col-reverse gap-3 border-t th-border px-5 py-4 sm:flex-row sm:justify-end">
+      <button type="button" (click)="closeRemoveConfirm()" [disabled]="isRemovingMember"
+        class="rounded-lg px-5 py-2 text-sm font-medium text-slate-400 transition hover:bg-slate-800/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer">
+        Cancelar
+      </button>
+      <button type="button" (click)="removePendingMember()" [disabled]="isRemovingMember"
+        class="rounded-lg bg-red-500 px-5 py-2 text-sm font-bold text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer">
+        {{ isRemovingMember ? 'Quitando...' : 'Quitar miembro' }}
+      </button>
+    </footer>
+  </section>
 </div>
 }

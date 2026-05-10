@@ -7,7 +7,9 @@ namespace App\Controller\Api;
 use App\Entity\Board;
 use App\Entity\BoardColumn;
 use App\Entity\Project;
+use App\Entity\ProjectMember;
 use App\Entity\User;
+use App\Enum\ProjectMemberRole;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -219,11 +221,12 @@ class ProjectController extends AbstractController
             SELECT DISTINCT p.id, p.name
             FROM App\Entity\Project p
             LEFT JOIN p.memberships m
-            WHERE (p.owner = :user OR m.user = :user)
+            WHERE (p.owner = :user OR (m.user = :user AND m.role = :adminRole))
               AND p.archived = false
             ORDER BY p.name ASC
         ')
             ->setParameter('user', $user)
+            ->setParameter('adminRole', ProjectMemberRole::ADMIN)
             ->getResult();
 
         return $this->json(['projects' => $projects]);
@@ -243,13 +246,8 @@ class ProjectController extends AbstractController
             return $this->json(['message' => 'Proyecto no encontrado.'], Response::HTTP_NOT_FOUND);
         }
 
-        // Validate permissions (Must be owner or have a membership)
-        if ($project->getOwner() !== $user) {
-            $membership = $this->em->getRepository(\App\Entity\ProjectMember::class)
-                ->findOneBy(['project' => $project, 'user' => $user]);
-            if (!$membership) {
-                return $this->json(['message' => 'No tienes permisos para invitar en este proyecto.'], Response::HTTP_FORBIDDEN);
-            }
+        if (!$this->canManageProjectMembers($project, $user)) {
+            return $this->json(['message' => 'No tienes permisos para invitar en este proyecto.'], Response::HTTP_FORBIDDEN);
         }
 
         $data = json_decode($request->getContent(), true);
@@ -267,17 +265,17 @@ class ProjectController extends AbstractController
             return $this->json(['message' => 'Este usuario ya es el dueño del proyecto.'], Response::HTTP_CONFLICT);
         }
 
-        $existingMembership = $this->em->getRepository(\App\Entity\ProjectMember::class)
+        $existingMembership = $this->em->getRepository(ProjectMember::class)
             ->findOneBy(['project' => $project, 'user' => $userToInvite]);
         
         if ($existingMembership) {
             return $this->json(['message' => 'Este usuario ya es miembro del proyecto.'], Response::HTTP_CONFLICT);
         }
 
-        $newMember = new \App\Entity\ProjectMember();
+        $newMember = new ProjectMember();
         $newMember->setProject($project);
         $newMember->setUser($userToInvite);
-        $newMember->setRole(\App\Enum\ProjectMemberRole::MEMBER);
+        $newMember->setRole(ProjectMemberRole::MEMBER);
 
         $this->em->persist($newMember);
         $this->em->flush();
@@ -285,6 +283,133 @@ class ProjectController extends AbstractController
         $this->logService->logAction($project, $user, 'member_invited', 'Invitó al usuario ' . $userToInvite->getName() . '.');
 
         return $this->json(['message' => 'Usuario invitado correctamente al proyecto.']);
+    }
+
+    #[Route('/{id}/members/{userId}/role', name: 'update_member_role', methods: ['PUT'])]
+    public function updateMemberRole(int $id, int $userId, Request $request): JsonResponse
+    {
+        $context = $this->getProjectMemberManagementContext($id);
+        if ($context instanceof JsonResponse) {
+            return $context;
+        }
+
+        ['project' => $project, 'user' => $user] = $context;
+
+        if ($user->getId() === $userId) {
+            return $this->json(['message' => 'No puedes cambiar tu propio rol.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($project->getOwner()->getId() === $userId) {
+            return $this->json(['message' => 'No se puede cambiar el rol del propietario.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $memberUser = $this->em->getRepository(User::class)->find($userId);
+        $membership = $memberUser instanceof User
+            ? $this->em->getRepository(ProjectMember::class)->findOneBy(['project' => $project, 'user' => $memberUser])
+            : null;
+
+        if (!$membership instanceof ProjectMember) {
+            return $this->json(['message' => 'Miembro no encontrado.'], Response::HTTP_NOT_FOUND);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        if (!is_array($data)) {
+            return $this->json(['message' => 'Solicitud invalida.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $role = (string) ($data['role'] ?? '');
+        $newRole = ProjectMemberRole::tryFrom($role);
+        if (!in_array($newRole, [ProjectMemberRole::ADMIN, ProjectMemberRole::MEMBER], true)) {
+            return $this->json(['message' => 'El rol debe ser admin o member.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $membership->setRole($newRole);
+        $this->em->flush();
+
+        $this->logService->logAction(
+            $project,
+            $user,
+            'member_role_updated',
+            sprintf('Cambió el rol de %s a %s.', $membership->getUser()->getName(), $newRole->value)
+        );
+
+        return $this->json(['message' => 'Rol actualizado correctamente.']);
+    }
+
+    #[Route('/{id}/members/{userId}', name: 'remove_member', methods: ['DELETE'])]
+    public function removeMember(int $id, int $userId): JsonResponse
+    {
+        $context = $this->getProjectMemberManagementContext($id);
+        if ($context instanceof JsonResponse) {
+            return $context;
+        }
+
+        ['project' => $project, 'user' => $user] = $context;
+
+        if ($user->getId() === $userId) {
+            return $this->json(['message' => 'No puedes eliminarte a ti mismo del proyecto.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($project->getOwner()->getId() === $userId) {
+            return $this->json(['message' => 'No se puede eliminar al propietario del proyecto.'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $memberUser = $this->em->getRepository(User::class)->find($userId);
+        $membership = $memberUser instanceof User
+            ? $this->em->getRepository(ProjectMember::class)->findOneBy(['project' => $project, 'user' => $memberUser])
+            : null;
+
+        if (!$membership instanceof ProjectMember) {
+            return $this->json(['message' => 'Miembro no encontrado.'], Response::HTTP_NOT_FOUND);
+        }
+
+        $memberName = $memberUser->getName();
+        $this->em->remove($membership);
+        $this->em->flush();
+
+        $this->logService->logAction(
+            $project,
+            $user,
+            'member_removed',
+            sprintf('Eliminó a %s del proyecto.', $memberName)
+        );
+
+        return $this->json(['message' => 'Miembro eliminado correctamente.']);
+    }
+
+    /** @return array{project: Project, user: User}|JsonResponse */
+    private function getProjectMemberManagementContext(int $projectId): array|JsonResponse
+    {
+        /** @var User|null $user */
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return $this->json(['message' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $project = $this->em->getRepository(Project::class)->find($projectId);
+        if (!$project) {
+            return $this->json(['message' => 'Proyecto no encontrado.'], Response::HTTP_NOT_FOUND);
+        }
+
+        if (!$this->canManageProjectMembers($project, $user)) {
+            return $this->json(['message' => 'No tienes permisos para gestionar miembros en este proyecto.'], Response::HTTP_FORBIDDEN);
+        }
+
+        return ['project' => $project, 'user' => $user];
+    }
+
+    private function canManageProjectMembers(Project $project, User $user): bool
+    {
+        if ($project->getOwner() === $user) {
+            return true;
+        }
+
+        $membership = $this->em->getRepository(ProjectMember::class)->findOneBy([
+            'project' => $project,
+            'user' => $user,
+        ]);
+
+        return $membership instanceof ProjectMember && $membership->getRole() === ProjectMemberRole::ADMIN;
     }
 
     #[Route('/all', name: 'all', methods: ['GET'])]
@@ -374,7 +499,11 @@ class ProjectController extends AbstractController
             if ($owner !== $user) {
                 $membership = $userMembershipMap[$pid] ?? null;
                 if ($membership !== null) {
-                    $myRole = $membership->getRole()->value === 'manager' ? 'Gestor' : 'Miembro';
+                    $myRole = match ($membership->getRole()) {
+                        ProjectMemberRole::ADMIN => 'Admin',
+                        ProjectMemberRole::MANAGER => 'Gestor',
+                        default => 'Miembro',
+                    };
                 }
             }
 
@@ -411,7 +540,10 @@ class ProjectController extends AbstractController
             ];
         }
 
-        return $this->json(['projects' => $results]);
+        return $this->json([
+            'projects' => $results,
+            'currentUserId' => $user->getId(),
+        ]);
     }
 
     #[Route('/{id}/logs', name: 'logs', methods: ['GET'])]

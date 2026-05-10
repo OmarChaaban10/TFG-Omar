@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter, DestroyRef, inject } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, DestroyRef, Input, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -25,6 +25,8 @@ interface UserSearch {
   templateUrl: './invite-member-modal.component.html',
 })
 export class InviteMemberModalComponent implements OnInit {
+  @Input() initialProjectId = 0;
+
   @Output() closed = new EventEmitter<void>();
   @Output() memberInvited = new EventEmitter<void>();
 
@@ -56,7 +58,10 @@ export class InviteMemberModalComponent implements OnInit {
       .subscribe({
         next: (res) => {
           this.participatingProjects = res.projects;
-          if (this.participatingProjects.length > 0) {
+          const initialProject = this.participatingProjects.find(project => project.id === this.initialProjectId);
+          if (initialProject) {
+            this.selectedProjectId = initialProject.id;
+          } else if (this.participatingProjects.length > 0) {
             this.selectedProjectId = this.participatingProjects[0].id;
           }
         },

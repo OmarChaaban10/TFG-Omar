@@ -65,7 +65,7 @@ final class SeedMassiveCommand extends Command
         $admin = $userRepository->findOneBy(['email' => $adminEmail]);
         if (!$admin) {
             $admin = (new User())
-                ->setName('Administrador Masivo')
+                ->setName('Administrador')
                 ->setEmail($adminEmail)
                 ->setGlobalRole(GlobalRole::ADMIN);
             $admin->setPasswordHash($this->passwordHasher->hashPassword($admin, 'Admin1234!'));
@@ -168,7 +168,7 @@ final class SeedMassiveCommand extends Command
             $this->entityManager->persist($board);
 
             // Columnas
-            $colNames = ['Backlog', 'To Do', 'In Progress', 'In Review', 'Done'];
+            $colNames = ['Por hacer', 'En progreso', 'En revisión', 'Hecho'];
             $colColors = ['#94A3B8', '#E2E8F0', '#FDE68A', '#BFDBFE', '#BBF7D0'];
             $projectCols = [];
             
@@ -214,7 +214,7 @@ final class SeedMassiveCommand extends Command
                 $col = $cols[array_rand($cols)];
                 $card->setColumn($col);
                 
-                $card->setTitle("Tarea Masiva $c - Proyecto $pId");
+                $card->setTitle("Tarea $c - Proyecto $pId");
                 $card->setDescription("Descripción detallada para la tarea $c. Necesita revisión y pruebas.");
                 $card->setPriority($priorities[array_rand($priorities)]);
                 $card->setPosition($c);
