@@ -90,7 +90,7 @@
             </button>
             @for (label of labelOptions; track label.name) {
             <button type="button" (click)="selectedLabelName = label.name"
-              class="th-label-chip rounded-sm px-2 py-1 text-[11px] font-bold uppercase tracking-wider transition ring-offset-2 ring-offset-[var(--bg-card)] cursor-pointer"
+              class="th-label-chip rounded-sm px-2 py-1 text-[11px] font-bold uppercase tracking-wider transition ring-offset-2 ring-offset-(--bg-card) cursor-pointer"
               [class.ring-2]="selectedLabelName === label.name" [class.ring-orange-400]="selectedLabelName === label.name"
               [style.backgroundColor]="label.color">
               {{ label.name }}

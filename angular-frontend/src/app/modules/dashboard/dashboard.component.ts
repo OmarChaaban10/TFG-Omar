@@ -33,11 +33,19 @@ import { CreateProjectModalComponent } from './create-project-modal/create-proje
 import { InviteMemberModalComponent } from './invite-member-modal/invite-member-modal.component';
 import { MembersComponent } from './members/members.component';
 import { ReportsComponent } from './reports/reports.component';
+import { ConfigComponent } from './config/config.component';
+
+interface ProfileUser {
+  id: number;
+  name: string;
+  email: string;
+  avatarUrl: string | null;
+}
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, ThemeToggleComponent, ProjectsComponent, CreateProjectModalComponent, InviteMemberModalComponent, MembersComponent, ReportsComponent],
+  imports: [CommonModule, FormsModule, ThemeToggleComponent, ProjectsComponent, CreateProjectModalComponent, InviteMemberModalComponent, MembersComponent, ReportsComponent, ConfigComponent],
   templateUrl: './dashboard.component.html'
 })
 export class DashboardComponent implements OnInit {
@@ -61,7 +69,7 @@ export class DashboardComponent implements OnInit {
   mobileMenuOpen = false;
 
   // View state
-  activeView: 'dashboard' | 'projects' | 'members' | 'reports' = 'dashboard';
+  activeView: 'dashboard' | 'projects' | 'members' | 'reports' | 'config' = 'dashboard';
 
   // Modal visibility
   showCreateModal = false;
@@ -203,9 +211,10 @@ export class DashboardComponent implements OnInit {
     this.router.navigate(['/']);
   }
 
-  setView(view: 'dashboard' | 'projects' | 'members' | 'reports'): void {
+  setView(view: 'dashboard' | 'projects' | 'members' | 'reports' | 'config'): void {
     this.activeView = view;
     this.mobileMenuOpen = false;
+    this.dropdownOpen = false;
   }
 
   openBoard(projectId: number, projectName = ''): void {
@@ -221,5 +230,16 @@ export class DashboardComponent implements OnInit {
 
   openInviteModal(): void {
     this.showInviteModal = true;
+  }
+
+  handleProfileUpdated(user: ProfileUser): void {
+    this.userName = user.name;
+    this.avatarUrl = user.avatarUrl;
+    this.userInitials = user.name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map(part => part.charAt(0).toUpperCase())
+      .join('');
   }
 }
