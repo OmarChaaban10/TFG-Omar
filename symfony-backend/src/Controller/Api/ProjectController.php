@@ -522,7 +522,13 @@ class ProjectController extends AbstractController
                     'role' => 'owner',
                 ],
             ];
+            $seenMemberIds = [$owner->getId() => true];
             foreach ($membersMap[$pid] ?? [] as $member) {
+                if (isset($seenMemberIds[$member['id']])) {
+                    continue;
+                }
+
+                $seenMemberIds[$member['id']] = true;
                 $members[] = $member;
             }
 

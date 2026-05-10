@@ -119,7 +119,7 @@ final class SeedMassiveCommand extends Command
         }
         $this->entityManager->flush();
 
-        $roles = [ProjectMemberRole::ADMIN, ProjectMemberRole::MANAGER, ProjectMemberRole::MEMBER];
+        $roles = [ProjectMemberRole::ADMIN, ProjectMemberRole::MEMBER];
 
         for ($p = 1; $p <= 20; $p++) {
             $project = new Project();

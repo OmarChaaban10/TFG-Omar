@@ -25,7 +25,6 @@ final class Version20260506123521 extends AbstractMigration
         $this->addSql('CREATE INDEX IDX_C91E0E44A76ED395 ON project_logs (user_id)');
         $this->addSql('ALTER TABLE project_logs ADD CONSTRAINT FK_C91E0E44166D1F9C FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE NOT DEFERRABLE');
         $this->addSql('ALTER TABLE project_logs ADD CONSTRAINT FK_C91E0E44A76ED395 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE SET NULL NOT DEFERRABLE');
-        $this->addSql('DROP TABLE rememberme_token');
         $this->addSql('CREATE INDEX idx_card_assignee_column ON cards (assignee_id, column_id)');
         $this->addSql('CREATE INDEX idx_notification_user_read ON notifications (user_id, read)');
         $this->addSql('CREATE INDEX idx_notification_sent_at ON notifications (sent_at)');
