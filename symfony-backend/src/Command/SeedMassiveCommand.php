@@ -107,8 +107,8 @@ final class SeedMassiveCommand extends Command
         $labels = [];
 
         // Generar algunas etiquetas globales
-        $labelNames = ['Bug', 'Feature', 'Urgent', 'Frontend', 'Backend', 'Design', 'Marketing'];
-        $labelColors = ['#EF4444', '#3B82F6', '#F59E0B', '#10B981', '#8B5CF6', '#EC4899', '#6366F1'];
+        $labelNames = ['Bug', 'Feature', 'Frontend', 'Backend', 'Design', 'Marketing', 'QA', 'Docs'];
+        $labelColors = ['#EF4444', '#3B82F6', '#10B981', '#8B5CF6', '#EC4899', '#6366F1', '#14B8A6', '#64748B'];
         
         foreach ($labelNames as $index => $name) {
             $label = new Label();
