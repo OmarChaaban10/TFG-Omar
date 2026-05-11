@@ -239,7 +239,7 @@
         (click)="openEditCardModal(card)"
         class="th-card-alt th-border group relative cursor-grab rounded-lg border p-3.5 shadow-sm transition-colors hover:bg-slate-800/50 active:cursor-grabbing">
         
-        <div *cdkDragPlaceholder class="bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-lg min-h-[100px] opacity-50"></div>
+        <div *cdkDragPlaceholder class="bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-lg min-h-25 opacity-50"></div>
 
         <p class="mb-3 wrap-break-words text-sm font-semibold leading-snug text-slate-200">{{ card.title }}</p>
         
@@ -260,9 +260,9 @@
 
           @if (card.assignee) {
             @if (card.assignee.avatarUrl) {
-              <img [src]="card.assignee.avatarUrl" [alt]="card.assignee.name" class="w-6 h-6 rounded-full object-cover ring-2 ring-[var(--bg-card-alt)]">
+              <img [src]="card.assignee.avatarUrl" [alt]="card.assignee.name" class="w-6 h-6 rounded-full object-cover ring-2 ring-(--bg-card-alt)">
             } @else {
-              <div class="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30 text-blue-400 text-[10px] font-bold ring-2 ring-[var(--bg-card-alt)]">
+              <div class="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30 text-blue-400 text-[10px] font-bold ring-2 ring-(--bg-card-alt)">
                 {{ card.assignee.name.substring(0, 2).toUpperCase() }}
               </div>
             }
