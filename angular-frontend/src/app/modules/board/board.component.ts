@@ -433,8 +433,6 @@ export class BoardComponent implements OnInit {
   getPriorityColor(priority: string | null): string {
     switch(priority) {
       case 'high':
-      case 'urgent':
-        return 'bg-red-500 text-white';
       case 'medium':
         return 'bg-amber-500 text-white';
       case 'low':
@@ -447,7 +445,6 @@ export class BoardComponent implements OnInit {
   getPriorityLabel(priority: string | null): string {
     switch(priority) {
       case 'high': return 'Alta';
-      case 'urgent': return 'Urgente';
       case 'medium': return 'Media';
       case 'low': return 'Baja';
       default: return 'Sin Prioridad';
@@ -467,7 +464,7 @@ export class BoardComponent implements OnInit {
       return false;
     }
 
-    if (this.activeFilters.highPriority && !['high', 'urgent'].includes(card.priority ?? '')) {
+    if (this.activeFilters.highPriority && !['high'].includes(card.priority ?? '')) {
       return false;
     }
 
