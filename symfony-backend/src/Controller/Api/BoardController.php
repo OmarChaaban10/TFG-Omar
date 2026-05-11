@@ -13,6 +13,7 @@ use App\Entity\Project;
 use App\Entity\ProjectMember;
 use App\Entity\User;
 use App\Enum\CardPriority;
+use App\Service\CreateBoardService;
 use App\Service\ProjectLogService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -25,6 +26,8 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/projects/{projectId}/board', name: 'api_board_')]
 class BoardController extends AbstractController
 {
+    use UserTrait;
+
     private const CARD_LABEL_COLORS = [
         'Bug' => '#EF4444',
         'Feature' => '#3B82F6',
@@ -39,24 +42,21 @@ class BoardController extends AbstractController
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly ProjectLogService $logService,
+        private readonly CreateBoardService $createBoardService,
     ) {
     }
 
     #[Route('', name: 'get', methods: ['GET'])]
     public function getBoard(int $projectId): JsonResponse
     {
-        /** @var User|null $user */
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return $this->json(['message' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
-        }
+        $user = $this->requireUser();
 
         $project = $this->em->getRepository(Project::class)->find($projectId);
         if (!$project) {
             return $this->json(['message' => 'Proyecto no encontrado.'], Response::HTTP_NOT_FOUND);
         }
 
-        // Validate permissions
+        // Comprobar permisos.
         if ($project->getOwner() !== $user) {
             $membership = $this->em->getRepository(ProjectMember::class)
                 ->findOneBy(['project' => $project, 'user' => $user]);
@@ -68,7 +68,7 @@ class BoardController extends AbstractController
         // Obtener el primer tablero del proyecto (asumimos 1 por ahora)
         $board = $this->em->getRepository(Board::class)->findOneBy(['project' => $project]);
         if (!$board) {
-            $board = $this->createDefaultBoard($project);
+            $board = $this->createBoardService->createForProject($project);
             $this->em->flush();
         }
 
@@ -221,34 +221,6 @@ class BoardController extends AbstractController
         ];
     }
 
-    private function createDefaultBoard(Project $project): Board
-    {
-        $board = (new Board())
-            ->setProject($project)
-            ->setName('Tablero Principal');
-
-        $columns = [
-            ['name' => 'Por hacer', 'position' => 1, 'color' => '#E2E8F0'],
-            ['name' => 'En progreso', 'position' => 2, 'color' => '#FDE68A'],
-            ['name' => 'En revisión', 'position' => 3, 'color' => '#BFDBFE'],
-            ['name' => 'Hecho', 'position' => 4, 'color' => '#BBF7D0'],
-        ];
-
-        foreach ($columns as $columnData) {
-            $column = (new BoardColumn())
-                ->setBoard($board)
-                ->setName($columnData['name'])
-                ->setPosition($columnData['position'])
-                ->setColor($columnData['color']);
-
-            $this->em->persist($column);
-        }
-
-        $this->em->persist($board);
-
-        return $board;
-    }
-
     #[Route('/columns', name: 'create_column', methods: ['POST'])]
     public function createColumn(int $projectId, Request $request): JsonResponse
     {
@@ -261,7 +233,7 @@ class BoardController extends AbstractController
 
         $board = $this->em->getRepository(Board::class)->findOneBy(['project' => $project]);
         if (!$board) {
-            $board = $this->createDefaultBoard($project);
+            $board = $this->createBoardService->createForProject($project);
             $this->em->flush();
         }
 
@@ -579,11 +551,7 @@ class BoardController extends AbstractController
     /** @return array{project: Project, user: User}|JsonResponse */
     private function getEditableProjectContext(int $projectId): array|JsonResponse
     {
-        /** @var User|null $user */
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return $this->json(['message' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
-        }
+        $user = $this->requireUser();
 
         $project = $this->em->getRepository(Project::class)->find($projectId);
         if (!$project) {
@@ -678,18 +646,14 @@ class BoardController extends AbstractController
     #[Route('/cards/{cardId}/move', name: 'move_card', methods: ['PUT'])]
     public function moveCard(int $projectId, int $cardId, Request $request): JsonResponse
     {
-        /** @var User|null $user */
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return $this->json(['message' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
-        }
+        $user = $this->requireUser();
 
         $project = $this->em->getRepository(Project::class)->find($projectId);
         if (!$project) {
             return $this->json(['message' => 'Proyecto no encontrado.'], Response::HTTP_NOT_FOUND);
         }
 
-        // Validate permissions
+        // Comprobar permisos.
         if ($project->getOwner() !== $user) {
             $membership = $this->em->getRepository(ProjectMember::class)
                 ->findOneBy(['project' => $project, 'user' => $user]);
@@ -716,7 +680,7 @@ class BoardController extends AbstractController
             return $this->json(['message' => 'Columna destino no encontrada.'], Response::HTTP_NOT_FOUND);
         }
 
-        // Verify column belongs to the project's board
+        // La columna debe pertenecer al tablero del proyecto.
         if ($newColumn->getBoard()->getProject() !== $project) {
             return $this->json(['message' => 'La columna no pertenece a este proyecto.'], Response::HTTP_BAD_REQUEST);
         }
@@ -724,21 +688,20 @@ class BoardController extends AbstractController
         $oldColumn = $card->getColumn();
         $isDifferentColumn = $oldColumn !== $newColumn;
 
-        // Actualizar posición y columna
+        // Actualizar posicion y columna.
         $card->setColumn($newColumn);
         $card->setPosition($newPosition);
         
         $this->em->persist($card);
-        $this->em->flush(); // Guardar el cambio principal primero
+        $this->em->flush(); // Guardamos el cambio principal primero.
         
-        // Reordenar resto de tarjetas en la nueva columna
+        // Reordenar el resto de tarjetas en la nueva columna.
         $cardsInNewColumn = $this->em->getRepository(Card::class)->findBy(
             ['column' => $newColumn],
             ['position' => 'ASC']
         );
         
-        // Si hay conflictos de posicion, recalculamos todas
-        // Para simplificar, ignoramos el card actual y reconstruimos posiciones
+        // Si hay posiciones repetidas, reconstruimos el orden.
         $pos = 0;
         foreach ($cardsInNewColumn as $c) {
             if ($c->getId() === $card->getId()) {
@@ -752,7 +715,7 @@ class BoardController extends AbstractController
             $pos++;
         }
 
-        // Si cambió de columna, también debemos reordenar la columna antigua para que no queden huecos
+        // Si cambio de columna, tambien cerramos huecos en la anterior.
         if ($isDifferentColumn) {
             $cardsInOldColumn = $this->em->getRepository(Card::class)->findBy(
                 ['column' => $oldColumn],
@@ -765,7 +728,7 @@ class BoardController extends AbstractController
                 $pos++;
             }
 
-            // Registrar LOG del movimiento
+            // Registrar el movimiento.
             $this->logService->logAction(
                 $project, 
                 $user, 

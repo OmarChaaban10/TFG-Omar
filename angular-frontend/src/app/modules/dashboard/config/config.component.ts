@@ -1,9 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, DestroyRef, EventEmitter, OnInit, Output, inject } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs/operators';
 
 interface ProfileUser {
@@ -48,7 +47,6 @@ export class ConfigComponent implements OnInit {
 
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
-  private readonly destroyRef = inject(DestroyRef);
 
   ngOnInit(): void {
     this.fetchProfile();
@@ -76,10 +74,7 @@ export class ConfigComponent implements OnInit {
     this.http.get<{ user: ProfileUser }>('/api/users/me', {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .pipe(
-        finalize(() => { this.isLoading = false; }),
-        takeUntilDestroyed(this.destroyRef),
-      )
+      .pipe(finalize(() => { this.isLoading = false; }))
       .subscribe({
         next: (res) => this.applyUser(res.user),
         error: () => {
@@ -149,10 +144,7 @@ export class ConfigComponent implements OnInit {
     this.http.post<{ message: string; user: ProfileUser }>('/api/users/me', payload, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .pipe(
-        finalize(() => { this.isSaving = false; }),
-        takeUntilDestroyed(this.destroyRef),
-      )
+      .pipe(finalize(() => { this.isSaving = false; }))
       .subscribe({
         next: (res) => {
           this.applyUser(res.user);
@@ -210,10 +202,7 @@ export class ConfigComponent implements OnInit {
       },
       headers: { Authorization: `Bearer ${token}` },
     })
-      .pipe(
-        finalize(() => { this.isDeletingAccount = false; }),
-        takeUntilDestroyed(this.destroyRef),
-      )
+      .pipe(finalize(() => { this.isDeletingAccount = false; }))
       .subscribe({
         next: (res) => {
           if (!res.deleted) {

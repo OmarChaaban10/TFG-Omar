@@ -16,6 +16,8 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api/users', name: 'api_users_')]
 class UserController extends AbstractController
 {
+    use UserTrait;
+
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly UserPasswordHasherInterface $passwordHasher,
@@ -25,11 +27,7 @@ class UserController extends AbstractController
     #[Route('/me', name: 'me', methods: ['GET'])]
     public function me(): JsonResponse
     {
-        /** @var User|null $user */
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return $this->json(['message' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
-        }
+        $user = $this->requireUser();
 
         return $this->json([
             'user' => [
@@ -44,11 +42,7 @@ class UserController extends AbstractController
     #[Route('/me', name: 'update_me', methods: ['PUT', 'POST'])]
     public function updateMe(Request $request): JsonResponse
     {
-        /** @var User|null $user */
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return $this->json(['message' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
-        }
+        $user = $this->requireUser();
 
         $data = str_starts_with((string) $request->headers->get('Content-Type'), 'application/json')
             ? json_decode($request->getContent(), true) ?? []
@@ -127,11 +121,7 @@ class UserController extends AbstractController
     #[Route('/me', name: 'delete_me', methods: ['DELETE'])]
     public function deleteMe(Request $request): JsonResponse
     {
-        /** @var User|null $user */
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return $this->json(['message' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
-        }
+        $user = $this->requireUser();
 
         $data = json_decode($request->getContent(), true);
         if (!is_array($data)) {
@@ -163,11 +153,7 @@ class UserController extends AbstractController
     #[Route('/search', name: 'search', methods: ['GET'])]
     public function search(Request $request): JsonResponse
     {
-        /** @var User|null $user */
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return $this->json(['message' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
-        }
+        $user = $this->requireUser();
 
         $query = trim((string) $request->query->get('q', ''));
         if ($query === '') {
@@ -189,7 +175,7 @@ class UserController extends AbstractController
             ->setMaxResults(10);
 
         if ($projectId > 0) {
-            // Exclude project owner and current members
+            // Evitar usuarios que ya pertenecen al proyecto.
             $subQb = $this->em->createQueryBuilder()
                 ->select('IDENTITY(pm.user)')
                 ->from('App\Entity\ProjectMember', 'pm')
@@ -198,7 +184,7 @@ class UserController extends AbstractController
             $qb->andWhere($qb->expr()->notIn('u.id', $subQb->getDQL()))
                ->setParameter('projectId', $projectId);
 
-            // Exclude project owner
+            // Evitar tambien al propietario.
             $ownerSubQb = $this->em->createQueryBuilder()
                 ->select('IDENTITY(p.owner)')
                 ->from('App\Entity\Project', 'p')

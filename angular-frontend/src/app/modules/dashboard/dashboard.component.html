@@ -23,7 +23,6 @@
     <div class="flex items-center gap-3">
       <app-theme-toggle></app-theme-toggle>
       <div class="relative" id="user-menu-container">
-        <!-- Avatar (click to toggle dropdown) -->
         <button (click)="toggleDropdown()"
           class="w-9 h-9 rounded-full overflow-hidden ring-2 ring-orange-500/60 flex items-center justify-center cursor-pointer focus:outline-none">
           @if (avatarUrl) {
@@ -35,7 +34,6 @@
           }
         </button>
 
-        <!-- Menu desplegable -->
         @if (dropdownOpen) {
         <div
           class="absolute right-0 mt-2 w-56 th-dropdown rounded-lg shadow-xl shadow-black/40 z-50 overflow-hidden border">
@@ -110,9 +108,7 @@
   </div>
   }
 
-  <!-- Cuerpo principal -->
   <div class="flex flex-col md:flex-row min-h-[calc(100vh-125px)]">
-    <!-- Barra lateral -->
     <aside class="hidden md:flex w-64 border-r flex-col py-6 px-4 th-sidebar">
       <nav class="flex-1 space-y-2">
         <button (click)="setView('dashboard')"
@@ -154,13 +150,10 @@
       </nav>
     </aside>
 
-    <!-- Contenido principal -->
     <main class="flex-1 p-8 overflow-y-auto th-body">
 
-      <!-- ===== VISTA: DASHBOARD ===== -->
       @if (activeView === 'dashboard') {
 
-      <!-- Banner de error -->
       @if (error && !isLoading) {
       <div
         class="mb-6 flex items-center gap-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg px-4 py-3">
@@ -174,15 +167,12 @@
       </div>
       }
 
-      <!-- Esqueleto de carga -->
       @if (isLoading) {
-      <!-- Esqueleto del saludo -->
       <div class="mb-8 animate-pulse">
         <div class="h-7 w-64 bg-slate-700/60 rounded mb-3"></div>
         <div class="h-4 w-48 bg-slate-800/60 rounded"></div>
       </div>
 
-      <!-- Esqueleto de estadísticas -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         @for (i of [1,2,3,4]; track i) {
         <div class="th-card rounded-lg p-5 border-t-4 border-slate-700 animate-pulse">
@@ -192,7 +182,6 @@
         }
       </div>
 
-      <!-- Esqueleto de proyectos -->
       <div class="mb-8">
         <div class="h-4 w-36 bg-slate-700/60 rounded mb-4 animate-pulse"></div>
         <div class="space-y-3">
@@ -204,9 +193,7 @@
       </div>
       }
 
-      <!-- Datos cargados -->
       @if (!isLoading && !error) {
-      <!-- Saludo -->
       <div class="mb-8">
         <h2 class="text-2xl font-bold th-text-heading tracking-wide font-ui">{{ daytime }}, {{ userName }}</h2>
         <p class="text-slate-400 mt-1">
@@ -218,7 +205,6 @@
         </p>
       </div>
 
-      <!-- Estadísticas -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         @for (stat of stats; track stat.label; let i = $index) {
         <div class="th-card rounded-lg p-5 flex flex-col justify-between">
@@ -228,7 +214,6 @@
         }
       </div>
 
-      <!-- Buscar proyecto -->
       <div class="mb-8">
         <div class="relative">
           <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" fill="none" stroke="currentColor"
@@ -249,7 +234,6 @@
           }
         </div>
 
-        <!-- Resultados de busqueda -->
         @if (isSearching) {
         <div class="mt-4 flex items-center gap-2 text-slate-400 text-sm">
           <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -308,11 +292,9 @@
         }
       </div>
 
-      <!-- Proyectos recientes -->
       <div class="mb-8">
         <h3 class="text-sm font-bold text-white tracking-wider mb-4 font-ui">Proyectos recientes</h3>
 
-        <!-- Estado vacío -->
         @if (recentProjects.length === 0) {
         <div class="th-card border border-dashed border-slate-700 rounded-lg p-8 text-center">
           <svg class="w-10 h-10 mx-auto text-slate-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -325,7 +307,6 @@
         }
 
         <div class="space-y-3">
-          <!-- Proyecto -->
           @for (project of recentProjects; track project.id) {
           <div
             class="th-card border border-slate-700 rounded-lg p-4 flex flex-col md:flex-row items-start md:items-center justify-between shadow-lg gap-4 md:gap-0">
@@ -360,7 +341,6 @@
         </div>
       </div>
 
-      <!-- Acciones Rápidas -->
       <div>
         <h3 class="text-sm font-bold text-white tracking-wider mb-4 font-ui">Acciones rápidas</h3>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
@@ -380,25 +360,20 @@
       </div>
       }
 
-      } <!-- end activeView === dashboard -->
-
-      <!-- ===== VISTA: PROYECTOS ===== -->
+      }
       @if (activeView === 'projects') {
       <app-projects (requestCreateProject)="openCreateModal()" (requestOpenBoard)="openBoard($event.id, $event.name)">
       </app-projects>
       }
 
-      <!-- ===== VISTA: MIEMBROS ===== -->
       @if (activeView === 'members') {
       <app-members></app-members>
       }
 
-      <!-- ===== VISTA: REPORTES ===== -->
       @if (activeView === 'reports') {
       <app-reports></app-reports>
       }
 
-      <!-- ===== VISTA: CONFIGURACIÓN ===== -->
       @if (activeView === 'config') {
       <app-config (profileUpdated)="handleProfileUpdated($event)"></app-config>
       }
@@ -411,14 +386,12 @@
   </footer>
 </div>
 
-<!-- Modal: Crear proyecto -->
 @if (showCreateModal) {
 <app-create-project-modal (closed)="showCreateModal = false"
   (projectCreated)="showCreateModal = false; fetchDashboardData()">
 </app-create-project-modal>
 }
 
-<!-- Modal: Invitar miembro -->
 @if (showInviteModal) {
 <app-invite-member-modal (closed)="showInviteModal = false" (memberInvited)="fetchDashboardData()">
 </app-invite-member-modal>

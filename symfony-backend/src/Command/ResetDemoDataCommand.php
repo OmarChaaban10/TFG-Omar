@@ -20,7 +20,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 #[AsCommand(
     name: 'app:seed:reset',
-    description: 'Remove demo data created by app:seed:demo.',
+    description: 'Elimina los datos demo creados por app:seed:demo.',
 )]
 final class ResetDemoDataCommand extends Command
 {
@@ -56,8 +56,7 @@ final class ResetDemoDataCommand extends Command
         ]);
 
         if ($project instanceof Project) {
-            // Cascades and foreign keys remove related boards, columns, cards,
-            // project members, notifications and card_labels rows.
+            // La base de datos limpia el resto por cascada.
             $this->entityManager->remove($project);
             $io->text('Proyecto demo eliminado.');
         } else {
@@ -101,6 +100,6 @@ final class ResetDemoDataCommand extends Command
         }
 
         $this->entityManager->remove($label);
-        $io->text(sprintf('Label "%s" eliminada.', $name));
+        $io->text(sprintf('Etiqueta "%s" eliminada.', $name));
     }
 }

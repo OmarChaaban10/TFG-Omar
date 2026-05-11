@@ -1,7 +1,6 @@
-import { Component, OnInit, Output, EventEmitter, DestroyRef, inject } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
 
@@ -43,7 +42,6 @@ export class ProjectsComponent implements OnInit {
   expandedProjectIds: Set<number> = new Set();
 
   private readonly http = inject(HttpClient);
-  private readonly destroyRef = inject(DestroyRef);
 
   ngOnInit(): void {
     this.fetchAllProjects();
@@ -78,10 +76,7 @@ export class ProjectsComponent implements OnInit {
     this.http.get<{ projects: ProjectFull[] }>('/api/projects/all', {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .pipe(
-        finalize(() => { this.isLoadingProjects = false; }),
-        takeUntilDestroyed(this.destroyRef),
-      )
+      .pipe(finalize(() => { this.isLoadingProjects = false; }))
       .subscribe({
         next: (res) => {
           this.allProjects = res.projects;

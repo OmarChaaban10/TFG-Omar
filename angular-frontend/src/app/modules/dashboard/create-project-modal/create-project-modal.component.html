@@ -1,10 +1,7 @@
 <div class="fixed inset-0 z-50 flex items-center justify-center">
-  <!-- Overlay -->
   <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" (click)="close()"></div>
 
-  <!-- Panel -->
   <div class="relative w-full max-w-lg mx-4 th-modal border border-slate-700 rounded-xl shadow-2xl shadow-black/50">
-    <!-- Header -->
     <div class="flex items-center justify-between px-6 py-4 border-b border-slate-700">
       <h2 class="text-lg font-bold text-white">Nuevo proyecto</h2>
       <button (click)="close()" class="text-slate-400 hover:text-white transition cursor-pointer">
@@ -14,9 +11,7 @@
       </button>
     </div>
 
-    <!-- Body -->
     <div class="px-6 py-5 space-y-5">
-      <!-- Error -->
       @if (createError) {
       <div
         class="flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg px-3 py-2 text-sm">
@@ -28,7 +23,6 @@
       </div>
       }
 
-      <!-- Nombre -->
       <div>
         <label for="project-name" class="block text-sm font-medium text-slate-300 mb-1.5">Nombre *</label>
         <input id="project-name" type="text" [(ngModel)]="newProjectName" maxlength="255"
@@ -36,7 +30,6 @@
           class="w-full th-input border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition" />
       </div>
 
-      <!-- Descripcion -->
       <div>
         <label for="project-desc" class="block text-sm font-medium text-slate-300 mb-1.5">Descripcion</label>
         <textarea id="project-desc" [(ngModel)]="newProjectDescription" rows="3"
@@ -44,7 +37,6 @@
           class="w-full th-input border rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition resize-none"></textarea>
       </div>
 
-      <!-- Color -->
       <div>
         <label class="block text-sm font-medium text-slate-300 mb-2">Color del proyecto</label>
         <div class="flex flex-wrap gap-2">
@@ -59,7 +51,6 @@
       </div>
     </div>
 
-    <!-- Footer -->
     <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-700">
       <button (click)="close()"
         class="px-4 py-2 text-sm font-medium text-slate-400 hover:text-white transition cursor-pointer">

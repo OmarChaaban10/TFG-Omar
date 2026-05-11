@@ -1,8 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, DestroyRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs/operators';
 import type { Assignee, BoardColumn, Card } from '../board.component';
 
@@ -91,7 +90,6 @@ export class CardModalComponent implements OnChanges {
   ];
 
   private readonly http = inject(HttpClient);
-  private readonly destroyRef = inject(DestroyRef);
 
   get isEditing(): boolean {
     return this.card !== null;
@@ -143,10 +141,7 @@ export class CardModalComponent implements OnChanges {
         });
 
     request
-      .pipe(
-        finalize(() => { this.isSaving = false; }),
-        takeUntilDestroyed(this.destroyRef),
-      )
+      .pipe(finalize(() => { this.isSaving = false; }))
       .subscribe({
         next: () => {
           this.saved.emit();
@@ -200,10 +195,7 @@ export class CardModalComponent implements OnChanges {
       { content },
       { headers: { Authorization: `Bearer ${token}` } }
     )
-      .pipe(
-        finalize(() => { this.isSavingComment = false; }),
-        takeUntilDestroyed(this.destroyRef),
-      )
+      .pipe(finalize(() => { this.isSavingComment = false; }))
       .subscribe({
         next: (res) => {
           this.comments = [...this.comments, res.comment];
@@ -249,10 +241,7 @@ export class CardModalComponent implements OnChanges {
     this.http.get<CommentsResponse>(`/api/projects/${this.projectId}/board/cards/${this.card.id}/comments`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .pipe(
-        finalize(() => { this.isLoadingComments = false; }),
-        takeUntilDestroyed(this.destroyRef),
-      )
+      .pipe(finalize(() => { this.isLoadingComments = false; }))
       .subscribe({
         next: (res) => {
           this.comments = res.comments;
@@ -310,8 +299,7 @@ export class CardModalComponent implements OnChanges {
           } else {
             this.isUploadingCommentImage = false;
           }
-        }),
-        takeUntilDestroyed(this.destroyRef),
+        })
       )
       .subscribe({
         next: (res) => {

@@ -1,8 +1,7 @@
-import { Component, Output, EventEmitter, DestroyRef, inject } from '@angular/core';
+import { Component, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -26,8 +25,8 @@ export class CreateProjectModalComponent {
     '#ef4444', '#eab308', '#06b6d4', '#ec4899',
   ];
 
-  private readonly http = inject(HttpClient);
-  private readonly destroyRef = inject(DestroyRef);
+  constructor(private readonly http: HttpClient) {
+  }
 
   close(): void {
     this.closed.emit();
@@ -56,10 +55,7 @@ export class CreateProjectModalComponent {
     }, {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .pipe(
-        finalize(() => { this.isCreating = false; }),
-        takeUntilDestroyed(this.destroyRef),
-      )
+      .pipe(finalize(() => { this.isCreating = false; }))
       .subscribe({
         next: () => {
           this.projectCreated.emit();

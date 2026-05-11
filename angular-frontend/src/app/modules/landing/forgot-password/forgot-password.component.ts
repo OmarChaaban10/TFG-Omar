@@ -1,8 +1,7 @@
-import { Component, DestroyRef, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ThemeToggleComponent } from '../../shared/theme-toggle/theme-toggle.component';
 
 interface ForgotPasswordResponse {
@@ -21,8 +20,8 @@ export class ForgotPasswordComponent {
   successMessage = '';
   errorMessage = '';
 
-  private readonly http = inject(HttpClient);
-  private readonly destroyRef = inject(DestroyRef);
+  constructor(private readonly http: HttpClient) {
+  }
 
   onSubmit(): void {
     this.successMessage = '';
@@ -35,7 +34,6 @@ export class ForgotPasswordComponent {
 
     this.loading = true;
     this.http.post<ForgotPasswordResponse>('/api/forgot-password', { email: this.email })
-      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
           this.successMessage = response.message || 'Correo enviado exitosamente.';

@@ -1,7 +1,6 @@
-import { Component, DestroyRef, inject } from '@angular/core';
+import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { RouterLink, Router } from '@angular/router';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ThemeToggleComponent } from '../../shared/theme-toggle/theme-toggle.component';
 
 interface CheckEmailResponse {
@@ -32,9 +31,11 @@ export class RegisterComponent {
   selectedFile: File | null = null;
   avatarPreview: string | null = null;
 
-  private readonly http = inject(HttpClient);
-  private readonly router = inject(Router);
-  private readonly destroyRef = inject(DestroyRef);
+  constructor(
+    private readonly http: HttpClient,
+    private readonly router: Router,
+  ) {
+  }
 
   checkEmail(): void {
     if (!this.email.trim()) {
@@ -44,7 +45,6 @@ export class RegisterComponent {
 
     this.isCheckingEmail = true;
     this.http.post<CheckEmailResponse>('/api/check-email', { email: this.email.trim() })
-      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
           this.isCheckingEmail = false;
@@ -115,7 +115,6 @@ export class RegisterComponent {
 
     this.http
       .post<RegisterResponse>('/api/register', formData)
-      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.successMessage = 'Cuenta creada correctamente. Redirigiendo al inicio de sesión...';

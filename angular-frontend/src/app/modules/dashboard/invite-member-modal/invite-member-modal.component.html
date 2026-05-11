@@ -12,7 +12,6 @@
     </div>
 
     <div class="px-6 py-5 space-y-5">
-      <!-- Messages -->
       @if (inviteError) {
       <div
         class="flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg px-3 py-2 text-sm">
@@ -33,7 +32,6 @@
       </div>
       }
 
-      <!-- Proyecto Select -->
       <div>
         <label class="block text-sm font-medium text-slate-300 mb-1.5">Proyecto *</label>
         <select [(ngModel)]="selectedProjectId" (change)="onProjectChange()"
@@ -47,7 +45,6 @@
         </select>
       </div>
 
-      <!-- Usuario Search -->
       <div class="relative">
         <label class="block text-sm font-medium text-slate-300 mb-1.5">Buscar usuario (nombre o email) *</label>
         <div class="relative">
@@ -69,7 +66,6 @@
           }
         </div>
 
-        <!-- Resultados de busqueda de usuarios (Dropdown) -->
         @if (hasSearchedUsers && !isSearchingUsers && !selectedUserToInvite && inviteSearchQuery) {
         <div class="absolute w-full mt-1 th-dropdown rounded-lg shadow-xl z-10 max-h-48 overflow-y-auto">
           @if (inviteSearchResults.length === 0) {

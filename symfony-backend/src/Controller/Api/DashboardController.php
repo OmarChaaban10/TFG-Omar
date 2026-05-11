@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controller\Api;
 
-use App\Entity\User;
 use App\Repository\DashboardRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -13,6 +12,8 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/api', name: 'api_')]
 class DashboardController extends AbstractController
 {
+    use UserTrait;
+
     public function __construct(
         private readonly DashboardRepository $dashboardRepository,
     ) {
@@ -21,11 +22,7 @@ class DashboardController extends AbstractController
     #[Route('/dashboard', name: 'dashboard', methods: ['GET'])]
     public function getDashboardData(): JsonResponse
     {
-        /** @var User|null $user */
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return $this->json(['message' => 'No autorizado'], JsonResponse::HTTP_UNAUTHORIZED);
-        }
+        $user = $this->requireUser();
 
         $activeProjectsCount = $this->dashboardRepository->countActiveProjects($user);
         $teamMembersCount = $this->dashboardRepository->countTeamMembers($user);

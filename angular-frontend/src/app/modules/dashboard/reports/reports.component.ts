@@ -1,8 +1,7 @@
-import { Component, OnInit, DestroyRef, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs/operators';
 
 interface ProjectOption {
@@ -42,7 +41,6 @@ export class ReportsComponent implements OnInit {
   logsError = '';
 
   private readonly http = inject(HttpClient);
-  private readonly destroyRef = inject(DestroyRef);
 
   ngOnInit(): void {
     this.fetchProjects();
@@ -57,10 +55,7 @@ export class ReportsComponent implements OnInit {
     this.http.get<{ projects: any[] }>('/api/projects/all', {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .pipe(
-        finalize(() => { this.isLoadingProjects = false; }),
-        takeUntilDestroyed(this.destroyRef),
-      )
+      .pipe(finalize(() => { this.isLoadingProjects = false; }))
       .subscribe({
         next: (res) => {
           this.projects = res.projects.map(p => ({ id: p.id, name: p.name }));
@@ -93,10 +88,7 @@ export class ReportsComponent implements OnInit {
     this.http.get<{ logs: ProjectLog[] }>(`/api/projects/${this.selectedProjectId}/logs`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .pipe(
-        finalize(() => { this.isLoadingLogs = false; }),
-        takeUntilDestroyed(this.destroyRef),
-      )
+      .pipe(finalize(() => { this.isLoadingLogs = false; }))
       .subscribe({
         next: (res) => {
           this.logs = res.logs;

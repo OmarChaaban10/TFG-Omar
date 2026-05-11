@@ -92,7 +92,7 @@ final class SeedMassiveCommand extends Command
             $this->entityManager->persist($user);
             $users[] = $user;
 
-            // Flush in batches
+            // Guardar por bloques para no cargar demasiada memoria.
             if ($i % 25 === 0) {
                 $this->entityManager->flush();
             }
@@ -129,26 +129,26 @@ final class SeedMassiveCommand extends Command
             // Color aleatorio
             $project->setColor(sprintf('#%06X', mt_rand(0, 0xFFFFFF)));
             
-            // Owner
+            // Propietario.
             $owner = ($p % 5 === 0) ? $admin : $users[array_rand($users)];
             $project->setOwner($owner);
 
             $this->entityManager->persist($project);
             $projects[] = $project;
 
-            // Membresía del owner
+            // Membresia del propietario.
             $membership = new ProjectMember();
             $membership->setProject($project);
             $membership->setUser($owner);
             $membership->setRole(ProjectMemberRole::ADMIN);
             $this->entityManager->persist($membership);
 
-            // Añadir 5-15 miembros aleatorios al proyecto
+            // Anadir 5-15 miembros aleatorios al proyecto.
             $numMembers = rand(5, 15);
             $projectMembers = [];
             for ($m = 0; $m < $numMembers; $m++) {
                 $randomUser = $users[array_rand($users)];
-                // Evitar duplicados
+                // Evitar duplicados.
                 if ($randomUser === $owner || in_array($randomUser, $projectMembers)) {
                     continue;
                 }
@@ -161,13 +161,13 @@ final class SeedMassiveCommand extends Command
                 $projectMembers[] = $randomUser;
             }
 
-            // Tablero
+            // Tablero.
             $board = new Board();
             $board->setProject($project);
             $board->setName("Tablero de Proyecto $p");
             $this->entityManager->persist($board);
 
-            // Columnas
+            // Columnas.
             $colNames = ['Por hacer', 'En progreso', 'En revisión', 'Hecho'];
             $colColors = ['#94A3B8', '#E2E8F0', '#FDE68A', '#BFDBFE', '#BBF7D0'];
             $projectCols = [];
@@ -195,8 +195,8 @@ final class SeedMassiveCommand extends Command
         $this->entityManager->flush();
         $io->text('20 Proyectos generados y poblados con miembros.');
 
-        // --- 4. Crear Tareas (Cards) y Logs (1000 tareas aprox) ---
-        $io->text('Generando tareas (Cards) y registros (Logs)...');
+        // --- 4. Crear tareas y registros (1000 tareas aprox) ---
+        $io->text('Generando tareas y registros...');
         $priorities = [CardPriority::LOW, CardPriority::MEDIUM, CardPriority::HIGH];
         
         $cardCount = 0;
@@ -205,12 +205,12 @@ final class SeedMassiveCommand extends Command
             $members = $data['members'];
             $project = $data['project'];
             
-            // Generar entre 30 y 80 tareas por proyecto
+            // Generar entre 30 y 80 tareas por proyecto.
             $numCards = rand(30, 80);
             
             for ($c = 1; $c <= $numCards; $c++) {
                 $card = new Card();
-                // Asignar a una columna aleatoria (simular progreso)
+                // Asignar una columna aleatoria para simular progreso.
                 $col = $cols[array_rand($cols)];
                 $card->setColumn($col);
                 
@@ -219,18 +219,18 @@ final class SeedMassiveCommand extends Command
                 $card->setPriority($priorities[array_rand($priorities)]);
                 $card->setPosition($c);
                 
-                // 70% de probabilidad de tener fecha de vencimiento
+                // Fecha de vencimiento en la mayoria de tarjetas.
                 if (rand(1, 100) <= 70) {
                     $days = rand(-10, 30);
                     $card->setDueDate(new \DateTimeImmutable(($days >= 0 ? '+' : '') . "$days days"));
                 }
                 
-                // 80% de probabilidad de tener asignado
+                // Asignado en la mayoria de tarjetas.
                 if (rand(1, 100) <= 80) {
                     $card->setAssignee($members[array_rand($members)]);
                 }
                 
-                // Añadir 0-3 etiquetas
+                // Anadir 0-3 etiquetas.
                 $numLabels = rand(0, 3);
                 $cardLabels = [];
                 for ($l = 0; $l < $numLabels; $l++) {
@@ -244,8 +244,8 @@ final class SeedMassiveCommand extends Command
                 $this->entityManager->persist($card);
                 $cardCount++;
 
-                // Generar un Log de creación para la tarea
-                if (rand(1, 100) <= 40) { // No saturar logs, crear para algunas
+                // Crear registro solo en algunas tarjetas.
+                if (rand(1, 100) <= 40) {
                     $log = new ProjectLog();
                     $log->setProject($project);
                     $log->setUser($members[array_rand($members)]);

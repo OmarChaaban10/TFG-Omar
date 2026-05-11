@@ -4,37 +4,35 @@ declare(strict_types=1);
 
 namespace App\Controller\Api;
 
-use App\Entity\Board;
-use App\Entity\BoardColumn;
 use App\Entity\Project;
 use App\Entity\ProjectMember;
 use App\Entity\User;
 use App\Enum\ProjectMemberRole;
+use App\Service\CreateBoardService;
+use App\Service\ProjectLogService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use App\Service\ProjectLogService;
 
 #[Route('/api/projects', name: 'api_projects_')]
 class ProjectController extends AbstractController
 {
+    use UserTrait;
+
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly ProjectLogService $logService,
+        private readonly CreateBoardService $createBoardService,
     ) {
     }
 
     #[Route('', name: 'create', methods: ['POST'])]
     public function create(Request $request): JsonResponse
     {
-        /** @var User|null $user */
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return $this->json(['message' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
-        }
+        $user = $this->requireUser();
 
         $data = json_decode($request->getContent(), true);
         if (!is_array($data)) {
@@ -65,7 +63,7 @@ class ProjectController extends AbstractController
             $project->setColor($color);
         }
 
-        $this->createDefaultBoard($project);
+        $this->createBoardService->createForProject($project);
 
         $this->em->persist($project);
         $this->em->flush();
@@ -83,42 +81,10 @@ class ProjectController extends AbstractController
         ], Response::HTTP_CREATED);
     }
 
-    private function createDefaultBoard(Project $project): Board
-    {
-        $board = (new Board())
-            ->setProject($project)
-            ->setName('Tablero Principal');
-
-        $columns = [
-            ['name' => 'Por hacer', 'position' => 1, 'color' => '#E2E8F0'],
-            ['name' => 'En progreso', 'position' => 2, 'color' => '#FDE68A'],
-            ['name' => 'En revisión', 'position' => 3, 'color' => '#BFDBFE'],
-            ['name' => 'Hecho', 'position' => 4, 'color' => '#BBF7D0'],
-        ];
-
-        foreach ($columns as $columnData) {
-            $column = (new BoardColumn())
-                ->setBoard($board)
-                ->setName($columnData['name'])
-                ->setPosition($columnData['position'])
-                ->setColor($columnData['color']);
-
-            $this->em->persist($column);
-        }
-
-        $this->em->persist($board);
-
-        return $board;
-    }
-
     #[Route('/search', name: 'search', methods: ['GET'])]
     public function search(Request $request): JsonResponse
     {
-        /** @var User|null $user */
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return $this->json(['message' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
-        }
+        $user = $this->requireUser();
 
         $query = trim((string) $request->query->get('q', ''));
         if ($query === '') {
@@ -211,11 +177,7 @@ class ProjectController extends AbstractController
     #[Route('/participating', name: 'participating', methods: ['GET'])]
     public function participating(): JsonResponse
     {
-        /** @var User|null $user */
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return $this->json(['message' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
-        }
+        $user = $this->requireUser();
 
         $projects = $this->em->createQuery('
             SELECT DISTINCT p.id, p.name
@@ -235,11 +197,7 @@ class ProjectController extends AbstractController
     #[Route('/{id}/invite', name: 'invite', methods: ['POST'])]
     public function invite(int $id, Request $request): JsonResponse
     {
-        /** @var User|null $user */
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return $this->json(['message' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
-        }
+        $user = $this->requireUser();
 
         $project = $this->em->getRepository(Project::class)->find($id);
         if (!$project) {
@@ -380,11 +338,7 @@ class ProjectController extends AbstractController
     /** @return array{project: Project, user: User}|JsonResponse */
     private function getProjectMemberManagementContext(int $projectId): array|JsonResponse
     {
-        /** @var User|null $user */
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return $this->json(['message' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
-        }
+        $user = $this->requireUser();
 
         $project = $this->em->getRepository(Project::class)->find($projectId);
         if (!$project) {
@@ -415,11 +369,7 @@ class ProjectController extends AbstractController
     #[Route('/all', name: 'all', methods: ['GET'])]
     public function all(): JsonResponse
     {
-        /** @var User|null $user */
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return $this->json(['message' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
-        }
+        $user = $this->requireUser();
 
         $projects = $this->em->createQuery('
             SELECT DISTINCT p
@@ -438,7 +388,7 @@ class ProjectController extends AbstractController
 
         $projectIds = array_map(static fn($p) => $p->getId(), $projects);
 
-        // Card stats
+        // Estadisticas de tarjetas por proyecto.
         $cardStats = $this->em->createQuery("
             SELECT IDENTITY(b.project) AS projectId,
                    COUNT(c.id) AS totalCards,
@@ -460,7 +410,7 @@ class ProjectController extends AbstractController
             ];
         }
 
-        // All memberships for these projects
+        // Miembros de todos los proyectos cargados.
         $allMemberships = $this->em->createQuery('
             SELECT m, u
             FROM App\Entity\ProjectMember m
@@ -482,7 +432,7 @@ class ProjectController extends AbstractController
             ];
         }
 
-        // User's own memberships for role detection
+        // Rol del usuario actual en cada proyecto.
         $userMembershipMap = [];
         foreach ($allMemberships as $m) {
             if ($m->getUser() === $user) {
@@ -501,7 +451,6 @@ class ProjectController extends AbstractController
                 if ($membership !== null) {
                     $myRole = match ($membership->getRole()) {
                         ProjectMemberRole::ADMIN => 'Admin',
-                        ProjectMemberRole::MANAGER => 'Gestor',
                         default => 'Miembro',
                     };
                 }
@@ -512,7 +461,7 @@ class ProjectController extends AbstractController
                 ? (int) round(($stats['doneCards'] / $stats['totalCards']) * 100)
                 : 0;
 
-            // Build members array: owner first, then members
+            // El propietario aparece primero y despues el resto.
             $members = [
                 [
                     'id' => $owner->getId(),
@@ -555,18 +504,14 @@ class ProjectController extends AbstractController
     #[Route('/{id}/logs', name: 'logs', methods: ['GET'])]
     public function logs(int $id): JsonResponse
     {
-        /** @var User|null $user */
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return $this->json(['message' => 'No autorizado'], Response::HTTP_UNAUTHORIZED);
-        }
+        $user = $this->requireUser();
 
         $project = $this->em->getRepository(Project::class)->find($id);
         if (!$project) {
             return $this->json(['message' => 'Proyecto no encontrado.'], Response::HTTP_NOT_FOUND);
         }
 
-        // Validate permissions
+        // Comprobar permisos.
         if ($project->getOwner() !== $user) {
             $membership = $this->em->getRepository(\App\Entity\ProjectMember::class)
                 ->findOneBy(['project' => $project, 'user' => $user]);

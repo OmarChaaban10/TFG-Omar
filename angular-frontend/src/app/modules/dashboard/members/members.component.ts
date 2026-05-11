@@ -1,8 +1,7 @@
-import { Component, OnInit, DestroyRef, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs/operators';
 import { InviteMemberModalComponent } from '../invite-member-modal/invite-member-modal.component';
 
@@ -46,7 +45,6 @@ export class MembersComponent implements OnInit {
   updatingRoleMemberIds = new Set<number>();
 
   private readonly http = inject(HttpClient);
-  private readonly destroyRef = inject(DestroyRef);
 
   ngOnInit(): void {
     this.fetchProjects();
@@ -77,10 +75,7 @@ export class MembersComponent implements OnInit {
     this.http.get<{ projects: ProjectFull[]; currentUserId: number }>('/api/projects/all', {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .pipe(
-        finalize(() => { this.isLoadingMembers = false; }),
-        takeUntilDestroyed(this.destroyRef),
-      )
+      .pipe(finalize(() => { this.isLoadingMembers = false; }))
       .subscribe({
         next: (res) => {
           this.projects = res.projects;
@@ -135,10 +130,7 @@ export class MembersComponent implements OnInit {
     this.http.delete(`/api/projects/${project.id}/members/${member.id}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .pipe(
-        finalize(() => { this.isRemovingMember = false; }),
-        takeUntilDestroyed(this.destroyRef),
-      )
+      .pipe(finalize(() => { this.isRemovingMember = false; }))
       .subscribe({
         next: () => {
           this.memberPendingRemoval = null;
@@ -166,10 +158,7 @@ export class MembersComponent implements OnInit {
       { role },
       { headers: { Authorization: `Bearer ${token}` } }
     )
-      .pipe(
-        finalize(() => { this.updatingRoleMemberIds.delete(member.id); }),
-        takeUntilDestroyed(this.destroyRef),
-      )
+      .pipe(finalize(() => { this.updatingRoleMemberIds.delete(member.id); }))
       .subscribe({
         next: () => {
           this.fetchProjects();

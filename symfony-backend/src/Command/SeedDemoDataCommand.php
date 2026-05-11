@@ -25,7 +25,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[AsCommand(
     name: 'app:seed:demo',
-    description: 'Seed demo data: admin user, project, board, columns, labels and cards.',
+    description: 'Seed demo: Crea un usuario admin y un proyecto con datos de ejemplo para desarrollo local',
 )]
 final class SeedDemoDataCommand extends Command
 {
@@ -165,7 +165,7 @@ final class SeedDemoDataCommand extends Command
                 ->setColumn($doingColumn)
                 ->setAssignee($admin)
                 ->setTitle('Montar vista de tablero en Angular')
-                ->setDescription('Renderizar columnas y drag and drop basico.')
+                ->setDescription('Renderizar columnas y arrastre de tarjetas.')
                 ->setPriority(CardPriority::MEDIUM)
                 ->setPosition(1)
                 ->setDueDate(new \DateTimeImmutable('+7 days'));

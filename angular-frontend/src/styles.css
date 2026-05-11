@@ -2,9 +2,9 @@
 @source "./**/*.html";
 @source "./**/*.ts";
 
-/* ===== THEME VARIABLES ===== */
+/* Variables de tema */
 
-/* Dark theme (default) */
+/* Tema oscuro */
 :root,
 [data-theme="dark"] {
 	--bg-page: #0c111f;
@@ -41,7 +41,7 @@
 	--font-copy: "Space Grotesk", sans-serif;
 }
 
-/* Light theme */
+/* Tema claro */
 [data-theme="light"] {
 	--bg-page: #f8fafc;
 	--bg-body: #f1f5f9;
@@ -74,7 +74,7 @@
 	--login-card-shadow: 0 20px 80px -35px rgba(249,115,22,0.2);
 }
 
-/* ===== BASE STYLES ===== */
+/* Base */
 
 html,
 body {
@@ -93,7 +93,7 @@ body {
 	font-family: var(--font-ui);
 }
 
-/* ===== THEMED CLASSES ===== */
+/* Clases de tema */
 
 .th-page { background-color: var(--bg-page); color: var(--text-primary); }
 .th-body { background-color: var(--bg-body); }
@@ -137,13 +137,13 @@ body {
 	color: #ffffff !important;
 }
 
-/* Card and surface hover state for light theme */
+/* Sombras suaves en tema claro */
 [data-theme="light"] .th-card { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06); }
 [data-theme="light"] .th-nav { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06); }
 
-/* ===== LIGHT MODE: Dashboard contrast overrides ===== */
+/* Ajustes de contraste en tema claro */
 
-/* Text overrides — white text is invisible on light bg */
+/* Texto */
 [data-theme="light"] .text-white { color: #0f172a; }
 [data-theme="light"] .text-slate-100 { color: #1e293b; }
 [data-theme="light"] .text-slate-200 { color: #334155; }
@@ -152,16 +152,16 @@ body {
 [data-theme="light"] .text-slate-500 { color: #94a3b8; }
 [data-theme="light"] .text-slate-600 { color: #64748b; }
 
-/* Border overrides — dark borders are too harsh on light bg */
+/* Bordes */
 [data-theme="light"] .border-slate-700 { border-color: #e2e8f0; }
 [data-theme="light"] .border-slate-800 { border-color: #e2e8f0; }
 [data-theme="light"] .border-slate-600 { border-color: #cbd5e1; }
 
-/* Fractional borders */
+/* Bordes con opacidad */
 [data-theme="light"] .border-slate-700\/50 { border-color: rgba(226, 232, 240, 0.8); }
 [data-theme="light"] .border-slate-700\/30 { border-color: rgba(226, 232, 240, 0.6); }
 
-/* Background overrides — dark backgrounds look wrong on light cards */
+/* Fondos */
 [data-theme="light"] .bg-slate-800 { background-color: #e2e8f0; }
 [data-theme="light"] .bg-slate-700\/60 { background-color: rgba(203, 213, 225, 0.5); }
 [data-theme="light"] .bg-slate-800\/60 { background-color: rgba(226, 232, 240, 0.5); }
@@ -171,56 +171,56 @@ body {
 [data-theme="light"] .bg-slate-800\/30 { background-color: rgba(226, 232, 240, 0.3); }
 [data-theme="light"] .bg-slate-900\/50 { background-color: rgba(203, 213, 225, 0.3); }
 
-/* Hover backgrounds */
+/* Fondos al pasar el raton */
 [data-theme="light"] .hover\:bg-slate-800:hover { background-color: #e2e8f0; }
 [data-theme="light"] .hover\:bg-slate-800\/50:hover { background-color: rgba(226, 232, 240, 0.5); }
 [data-theme="light"] .hover\:bg-slate-800\/30:hover { background-color: rgba(226, 232, 240, 0.4); }
 
-/* Hover borders */
+/* Bordes al pasar el raton */
 [data-theme="light"] .hover\:border-slate-600:hover { border-color: #94a3b8; }
 
 
 
-/* Hover text */
+/* Texto al pasar el raton */
 [data-theme="light"] .hover\:text-white:hover { color: #0f172a; }
 
-/* Action buttons */
+/* Botones */
 [data-theme="light"] .bg-\[\#0e1629\] { background-color: #f1f5f9; }
 
-/* Shadow overrides */
+/* Sombras */
 [data-theme="light"] .shadow-lg { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03); }
 [data-theme="light"] .shadow-black\/40 { --tw-shadow-color: rgba(0, 0, 0, 0.08); }
 [data-theme="light"] .shadow-black\/50 { --tw-shadow-color: rgba(0, 0, 0, 0.1); }
 
-/* Role badges — keep the colored text but boost lightmode contrast slightly */
+/* Roles */
 [data-theme="light"] .text-purple-400 { color: #7c3aed; }
 [data-theme="light"] .text-sky-400 { color: #0284c7; }
 [data-theme="light"] .text-emerald-400 { color: #059669; }
 [data-theme="light"] .text-amber-400 { color: #d97706; }
 [data-theme="light"] .text-blue-400 { color: #2563eb; }
 
-/* Badge backgrounds */
+/* Fondos de etiquetas */
 [data-theme="light"] .bg-purple-500\/20 { background-color: rgba(124, 58, 237, 0.1); }
 [data-theme="light"] .bg-sky-500\/20 { background-color: rgba(2, 132, 199, 0.1); }
 [data-theme="light"] .bg-emerald-500\/20 { background-color: rgba(5, 150, 105, 0.1); }
 [data-theme="light"] .bg-amber-500\/20 { background-color: rgba(217, 119, 6, 0.1); }
 [data-theme="light"] .bg-blue-500\/20 { background-color: rgba(37, 99, 235, 0.1); }
 
-/* Error / success feedback */
+/* Mensajes */
 [data-theme="light"] .bg-red-500\/10 { background-color: rgba(239, 68, 68, 0.06); }
 [data-theme="light"] .border-red-500\/30 { border-color: rgba(239, 68, 68, 0.2); }
 [data-theme="light"] .text-red-400 { color: #dc2626; }
 [data-theme="light"] .text-red-200 { color: #dc2626; }
 
-/* Action button borders */
+/* Bordes de botones */
 [data-theme="light"] .border-orange-500\/20 { border-color: rgba(249, 115, 22, 0.3); }
 [data-theme="light"] .border-blue-500\/20 { border-color: rgba(37, 99, 235, 0.3); }
 [data-theme="light"] .border-purple-500\/20 { border-color: rgba(124, 58, 237, 0.3); }
 
-/* Placeholders */
+/* Texto de ejemplo */
 [data-theme="light"] .placeholder-slate-500::placeholder { color: #94a3b8; }
 
-/* ===== LOGIN SCENE ===== */
+/* Login */
 
 .login-scene {
 	position: relative;
@@ -249,12 +249,12 @@ body {
 	box-shadow: var(--login-card-shadow);
 }
 
-/* Light-mode overrides for landing text */
+/* Texto del login en tema claro */
 [data-theme="light"] .login-scene {
 	color: var(--text-primary);
 }
 
-/* Landing page form elements */
+/* Formulario del login */
 .login-input {
 	background: rgba(15, 23, 42, 0.9);
 	border-color: rgba(51, 65, 85, 1);

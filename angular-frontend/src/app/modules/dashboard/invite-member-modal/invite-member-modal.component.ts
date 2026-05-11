@@ -54,8 +54,7 @@ export class InviteMemberModalComponent implements OnInit {
     const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
     this.http.get<{ projects: ProjectSimple[] }>('/api/projects/participating', {
       headers: { Authorization: `Bearer ${token}` }
-    }).pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
+    }).subscribe({
         next: (res) => {
           this.participatingProjects = res.projects;
           const initialProject = this.participatingProjects.find(project => project.id === this.initialProjectId);
@@ -144,10 +143,7 @@ export class InviteMemberModalComponent implements OnInit {
     }, {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .pipe(
-        finalize(() => { this.isInviting = false; }),
-        takeUntilDestroyed(this.destroyRef),
-      )
+      .pipe(finalize(() => { this.isInviting = false; }))
       .subscribe({
         next: (res) => {
           this.inviteSuccessMessage = res.message;

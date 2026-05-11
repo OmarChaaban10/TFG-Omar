@@ -68,14 +68,11 @@ export class DashboardComponent implements OnInit {
   dropdownOpen = false;
   mobileMenuOpen = false;
 
-  // View state
   activeView: 'dashboard' | 'projects' | 'members' | 'reports' | 'config' = 'dashboard';
 
-  // Modal visibility
   showCreateModal = false;
   showInviteModal = false;
 
-  // Search state
   searchQuery = '';
   searchResults: RecentProject[] = [];
   isSearching = false;
@@ -148,8 +145,7 @@ export class DashboardComponent implements OnInit {
       .pipe(
         finalize(() => {
           this.isLoading = false;
-        }),
-        takeUntilDestroyed(this.destroyRef),
+        })
       )
       .subscribe({
         next: (data) => {

@@ -1,7 +1,6 @@
-import { Component, OnInit, DestroyRef, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs/operators';
 import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { FormsModule } from '@angular/forms';
@@ -100,12 +99,11 @@ export class BoardComponent implements OnInit {
     thisWeek: false,
   };
   
-  // Para los id de las listas conectadas de drag & drop
+  // Ids de las listas conectadas para arrastrar tarjetas.
   connectedLists: string[] = [];
 
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
-  private readonly destroyRef = inject(DestroyRef);
   private loadedProjectId: number | null = null;
 
   ngOnInit(): void {
@@ -178,10 +176,7 @@ export class BoardComponent implements OnInit {
     this.http.get<BoardResponse>(`/api/projects/${this.projectId}/board`, {
       headers: { Authorization: `Bearer ${token}` }
     })
-      .pipe(
-        finalize(() => { this.isLoading = false; }),
-        takeUntilDestroyed(this.destroyRef),
-      )
+      .pipe(finalize(() => { this.isLoading = false; }))
       .subscribe({
         next: (res) => {
           this.board = res.board;
@@ -190,7 +185,7 @@ export class BoardComponent implements OnInit {
           if (!this.projectName) {
             this.projectName = res.board.name;
           }
-          // Actualizamos los IDs de conexión (col-1, col-2...)
+          // Angular CDK necesita los ids de cada columna conectada.
           if (this.board && this.board.columns) {
             this.connectedLists = this.board.columns.map(c => `col-${c.id}`);
           }
@@ -282,10 +277,7 @@ export class BoardComponent implements OnInit {
       { name, color: this.newColumnColor },
       { headers: { Authorization: `Bearer ${token}` } }
     )
-      .pipe(
-        finalize(() => { this.isCreatingColumn = false; }),
-        takeUntilDestroyed(this.destroyRef),
-      )
+      .pipe(finalize(() => { this.isCreatingColumn = false; }))
       .subscribe({
         next: (res) => {
           if (!this.board) return;
@@ -341,10 +333,7 @@ export class BoardComponent implements OnInit {
     this.http.delete(`/api/projects/${this.projectId}/board/columns/${column.id}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .pipe(
-        finalize(() => { this.isDeletingColumn = false; }),
-        takeUntilDestroyed(this.destroyRef),
-      )
+      .pipe(finalize(() => { this.isDeletingColumn = false; }))
       .subscribe({
         next: () => {
           if (!this.board) return;
@@ -433,11 +422,7 @@ export class BoardComponent implements OnInit {
       { columnId, position: newPosition },
       { headers: { Authorization: `Bearer ${token}` } }
     )
-    .pipe(takeUntilDestroyed(this.destroyRef))
     .subscribe({
-      next: () => {
-        // Todo bien, se guardó la nueva posición
-      },
       error: (err) => {
         console.error('Error al mover la tarjeta', err);
         this.fetchBoard();
@@ -531,7 +516,7 @@ export class BoardComponent implements OnInit {
     const hasFilters = this.activeFilters.highPriority || this.activeFilters.myTasks || this.activeFilters.thisWeek;
     if (!query && !hasFilters) return this.board.columns;
     
-    // Clonación profunda básica para no alterar la matriz real con el filtro
+    // Copia sencilla para no tocar el tablero real al filtrar.
     return this.board.columns.map(col => ({
       ...col,
       cards: col.cards.filter(c => this.matchesActiveFilters(c, query))
