@@ -12,11 +12,15 @@ services:
       APP_ENV: dev
       DATABASE_URL: "postgresql://symfony:password@db:5432/symfony_db?serverVersion=17&charset=utf8"
       JWT_PASSPHRASE: "83f2fbac3a7919bec1a322d5ffa115ac53af17af60bd2b948b98245ce33eca33"
+      MAILER_DSN: "smtp://mailpit:1025"
+      FRONTEND_URL: "http://localhost:4200"
     volumes:
       - ./symfony-backend:/var/www/app
     depends_on:
       db:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     ports:
       - "8000:8000"
     command: ["symfony", "server:start", "--no-tls", "--allow-http", "--port=8000", "--allow-all-ip"]
@@ -54,6 +58,13 @@ services:
     ports:
       - "4200:4200"
     command: ["sh", "-c", "npm install && ng serve --host 0.0.0.0"]
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
 
 
 volumes:

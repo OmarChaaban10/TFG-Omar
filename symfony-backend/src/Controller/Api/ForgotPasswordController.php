@@ -17,7 +17,7 @@ final class ForgotPasswordController
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly MailerInterface $mailer
+        private readonly MailerInterface $mailer,
     ) {
     }
 
@@ -40,7 +40,6 @@ final class ForgotPasswordController
             return new JsonResponse(['message' => 'El formato del correo no es válido.'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Siempre devolvemos la misma respuesta para no revelar si el email existe
         $genericMessage = 'Si existe una cuenta con ese correo, recibirás un enlace para recuperar tu contraseña.';
 
         $user = $this->entityManager->getRepository(User::class)->findOneBy(['email' => mb_strtolower($email)]);
@@ -49,16 +48,16 @@ final class ForgotPasswordController
             return new JsonResponse(['message' => $genericMessage], Response::HTTP_OK);
         }
 
-        // Generamos el token de recuperación
         $token = bin2hex(random_bytes(32));
-        $user->setResetToken($token);
+        $user
+            ->setResetToken($token)
+            ->setResetTokenExpiresAt(new \DateTimeImmutable('+1 hour'));
         $this->entityManager->flush();
 
-        // Creamos el enlace de recuperación
-        $resetLink = 'http://localhost:4200/reset-password?token=' . $token;
+        $resetLink = rtrim($_ENV['FRONTEND_URL'] ?? 'http://localhost:4200', '/') . '/reset-password?token=' . urlencode($token);
 
         $emailMsg = (new Email())
-            ->from('no-reply@taskhive.app')
+            ->from('no-reply@taskhive.local')
             ->to($user->getEmail())
             ->subject('Recuperación de contraseña en TaskHive')
             ->text("Hola {$user->getName()},\n\nPara recuperar tu contraseña haz click en el siguiente enlace:\n{$resetLink}\n\nSi no has sido tú, ignora este mensaje.")
@@ -66,8 +65,7 @@ final class ForgotPasswordController
 
         try {
             $this->mailer->send($emailMsg);
-        } catch (\Exception) {
-            // Si falla el envío, no se lo decimos al usuario
+        } catch (\Throwable) {
             return new JsonResponse(['message' => $genericMessage], Response::HTTP_OK);
         }
 
