@@ -433,6 +433,7 @@ export class BoardComponent implements OnInit {
   getPriorityColor(priority: string | null): string {
     switch(priority) {
       case 'high':
+        return 'bg-red-500 text-white';
       case 'medium':
         return 'bg-amber-500 text-white';
       case 'low':
