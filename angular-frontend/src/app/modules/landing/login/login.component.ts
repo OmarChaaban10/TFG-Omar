@@ -59,6 +59,7 @@ export class LoginComponent implements OnInit {
         next: (response) => {
           localStorage.removeItem('jwt_token');
           sessionStorage.removeItem('jwt_token');
+          sessionStorage.removeItem('selected_board_project');
 
           if (rememberMe) {
             localStorage.setItem('jwt_token', response.token);

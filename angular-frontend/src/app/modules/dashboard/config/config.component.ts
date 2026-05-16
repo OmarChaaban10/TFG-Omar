@@ -212,6 +212,7 @@ export class ConfigComponent implements OnInit {
 
           localStorage.removeItem('jwt_token');
           sessionStorage.removeItem('jwt_token');
+          sessionStorage.removeItem('selected_board_project');
           this.router.navigate(['/']);
         },
         error: (err) => {

@@ -174,7 +174,8 @@ export class BoardComponent implements OnInit {
     const token = localStorage.getItem('jwt_token') || sessionStorage.getItem('jwt_token');
 
     this.http.get<BoardResponse>(`/api/projects/${this.projectId}/board`, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
+      params: { projectName: this.projectName },
     })
       .pipe(finalize(() => { this.isLoading = false; }))
       .subscribe({
@@ -203,6 +204,7 @@ export class BoardComponent implements OnInit {
   logout(): void {
     localStorage.removeItem('jwt_token');
     sessionStorage.removeItem('jwt_token');
+    sessionStorage.removeItem('selected_board_project');
     this.router.navigate(['/']);
   }
 

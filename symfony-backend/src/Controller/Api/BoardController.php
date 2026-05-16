@@ -47,22 +47,26 @@ class BoardController extends AbstractController
     }
 
     #[Route('', name: 'get', methods: ['GET'])]
-    public function getBoard(int $projectId): JsonResponse
+    public function getBoard(int $projectId, Request $request): JsonResponse
     {
         $user = $this->requireUser();
+
+        $projectName = trim((string) $request->query->get('projectName', ''));
+        if ($projectName === '') {
+            return $this->json(['message' => 'Proyecto no válido.'], Response::HTTP_BAD_REQUEST);
+        }
 
         $project = $this->em->getRepository(Project::class)->find($projectId);
         if (!$project) {
             return $this->json(['message' => 'Proyecto no encontrado.'], Response::HTTP_NOT_FOUND);
         }
 
-        // Comprobar permisos.
-        if ($project->getOwner() !== $user) {
-            $membership = $this->em->getRepository(ProjectMember::class)
-                ->findOneBy(['project' => $project, 'user' => $user]);
-            if (!$membership) {
-                return $this->json(['message' => 'No tienes permisos para ver este tablero.'], Response::HTTP_FORBIDDEN);
-            }
+        if ($project->getName() !== $projectName) {
+            return $this->json(['message' => 'Proyecto no encontrado.'], Response::HTTP_NOT_FOUND);
+        }
+
+        if (!$this->userBelongsToProject($project, $user)) {
+            return $this->json(['message' => 'No tienes permisos para ver este tablero.'], Response::HTTP_FORBIDDEN);
         }
 
         // Obtener el primer tablero del proyecto (asumimos 1 por ahora)

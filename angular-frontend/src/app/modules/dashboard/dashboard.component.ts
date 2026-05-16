@@ -204,6 +204,7 @@ export class DashboardComponent implements OnInit {
   logout(): void {
     localStorage.removeItem('jwt_token');
     sessionStorage.removeItem('jwt_token');
+    sessionStorage.removeItem('selected_board_project');
     this.router.navigate(['/']);
   }
 
