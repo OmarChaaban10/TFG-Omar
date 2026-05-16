@@ -35,6 +35,7 @@ class UserController extends AbstractController
                 'name' => $user->getName(),
                 'email' => $user->getEmail(),
                 'avatarUrl' => $user->getAvatarUrl(),
+                'twoFactorEnabled' => $user->isTotpAuthenticationEnabled(),
             ],
         ]);
     }
@@ -114,6 +115,7 @@ class UserController extends AbstractController
                 'name' => $user->getName(),
                 'email' => $user->getEmail(),
                 'avatarUrl' => $user->getAvatarUrl(),
+                'twoFactorEnabled' => $user->isTotpAuthenticationEnabled(),
             ],
         ]);
     }

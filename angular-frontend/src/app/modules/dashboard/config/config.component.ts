@@ -4,12 +4,14 @@ import { Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
+import { Setup2faComponent } from '../setup-2fa/setup-2fa.component';
 
 interface ProfileUser {
   id: number;
   name: string;
   email: string;
   avatarUrl: string | null;
+  twoFactorEnabled: boolean;
 }
 
 interface DeleteAccountResponse {
@@ -20,7 +22,7 @@ interface DeleteAccountResponse {
 @Component({
   selector: 'app-config',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, Setup2faComponent],
   templateUrl: './config.component.html',
 })
 export class ConfigComponent implements OnInit {
@@ -219,6 +221,12 @@ export class ConfigComponent implements OnInit {
           this.deleteAccountError = err.error?.message ?? 'No se pudo eliminar la cuenta.';
         },
       });
+  }
+
+  updateTwoFactorState(enabled: boolean): void {
+    if (!this.user) return;
+
+    this.user = { ...this.user, twoFactorEnabled: enabled };
   }
 
   private applyUser(user: ProfileUser): void {

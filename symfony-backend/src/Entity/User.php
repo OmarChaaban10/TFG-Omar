@@ -8,13 +8,16 @@ use App\Enum\GlobalRole;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Scheb\TwoFactorBundle\Model\Totp\TotpConfiguration;
+use Scheb\TwoFactorBundle\Model\Totp\TotpConfigurationInterface;
+use Scheb\TwoFactorBundle\Model\Totp\TwoFactorInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'users')]
 #[ORM\UniqueConstraint(name: 'uniq_users_email', columns: ['email'])]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFactorInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -41,6 +44,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(name: 'reset_token_expires_at', type: 'datetime_immutable', nullable: true)]
     private ?\DateTimeImmutable $resetTokenExpiresAt = null;
+
+    #[ORM\Column(name: 'totp_secret', length: 255, nullable: true)]
+    private ?string $totpSecret = null;
+
+    #[ORM\Column(name: 'totp_pending_secret', length: 255, nullable: true)]
+    private ?string $totpPendingSecret = null;
 
     #[ORM\Column(name: 'created_at', type: 'datetime_immutable')]
     private \DateTimeImmutable $createdAt;
@@ -175,6 +184,49 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->resetTokenExpiresAt = $resetTokenExpiresAt;
 
         return $this;
+    }
+
+    public function getTotpSecret(): ?string
+    {
+        return $this->totpSecret;
+    }
+
+    public function setTotpSecret(?string $totpSecret): self
+    {
+        $this->totpSecret = $totpSecret;
+
+        return $this;
+    }
+
+    public function getTotpPendingSecret(): ?string
+    {
+        return $this->totpPendingSecret;
+    }
+
+    public function setTotpPendingSecret(?string $totpPendingSecret): self
+    {
+        $this->totpPendingSecret = $totpPendingSecret;
+
+        return $this;
+    }
+
+    public function isTotpAuthenticationEnabled(): bool
+    {
+        return $this->totpSecret !== null && $this->totpSecret !== '';
+    }
+
+    public function getTotpAuthenticationUsername(): string
+    {
+        return $this->email;
+    }
+
+    public function getTotpAuthenticationConfiguration(): ?TotpConfigurationInterface
+    {
+        if (!$this->isTotpAuthenticationEnabled()) {
+            return null;
+        }
+
+        return new TotpConfiguration($this->totpSecret, TotpConfiguration::ALGORITHM_SHA1, 30, 6);
     }
 
     public function getCreatedAt(): \DateTimeImmutable

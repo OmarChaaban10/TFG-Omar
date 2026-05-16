@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './modules/landing/login/login.component';
 import { ForgotPasswordComponent } from './modules/landing/forgot-password/forgot-password.component';
 import { ResetPasswordComponent } from './modules/landing/reset-password/reset-password.component';
+import { TwoFactorVerifyComponent } from './modules/landing/two-factor-verify/two-factor-verify.component';
 import { RegisterComponent } from './modules/landing/register/register.component';
 import { DashboardComponent } from './modules/dashboard/dashboard.component';
 import { BoardComponent } from './modules/board/board.component';
@@ -22,6 +23,11 @@ export const routes: Routes = [
 	{
 		path: 'reset-password',
 		component: ResetPasswordComponent,
+		canActivate: [guestGuard]
+	},
+	{
+		path: '2fa-verify',
+		component: TwoFactorVerifyComponent,
 		canActivate: [guestGuard]
 	},
 	{

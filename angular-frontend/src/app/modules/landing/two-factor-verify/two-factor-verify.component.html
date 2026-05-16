@@ -1,0 +1,61 @@
+<div class="login-scene min-h-screen" style="color: var(--text-primary)">
+  <div class="fixed top-4 right-4 z-50">
+    <app-theme-toggle></app-theme-toggle>
+  </div>
+
+  <main class="mx-auto flex max-w-6xl items-center justify-center px-4 py-10 sm:px-6" style="min-height: calc(100vh - 86px)">
+    <section class="login-card w-full max-w-md rounded-3xl border p-6 backdrop-blur-sm sm:p-8">
+      <div class="flex justify-center align-center">
+        <img src="taskhive_logo.png" class="w-14 h-16" alt="TaskHive Logo">
+      </div>
+
+      <h1 class="mt-5 text-center text-3xl font-bold tracking-tight login-title">Verificación 2FA</h1>
+      <p class="mt-1 text-center text-sm login-subtitle">Introduce el código de 6 dígitos de tu app autenticadora</p>
+
+      <form class="mt-7 space-y-4" (submit)="verify(); $event.preventDefault();" novalidate>
+        <div class="flex flex-col gap-1.5">
+          <label for="two-factor-code" class="text-xs font-semibold tracking-wide login-label">Código</label>
+          <input
+            id="two-factor-code"
+            name="twoFactorCode"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            [(ngModel)]="code"
+            class="login-input w-full rounded-xl border border-orange-500/80 px-4 py-3 text-center text-2xl font-bold tracking-[0.35em] outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-500/30"
+            placeholder="000000"
+          />
+        </div>
+
+        @if (errorMessage) {
+          <div class="rounded-2xl border border-red-500/60 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            {{ errorMessage }}
+          </div>
+        }
+
+        <button
+          type="submit"
+          [disabled]="isSubmitting || blocked"
+          class="w-full cursor-pointer rounded-xl bg-linear-to-r from-orange-500 to-amber-500 px-4 py-3 text-sm font-bold text-slate-950 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          {{ isSubmitting ? 'Verificando...' : 'Verificar código' }}
+        </button>
+
+        <button
+          type="button"
+          (click)="cancel()"
+          class="w-full rounded-xl px-4 py-3 text-sm font-semibold text-slate-400 transition hover:bg-slate-800/50 hover:text-white cursor-pointer"
+        >
+          Volver al login
+        </button>
+      </form>
+
+      <p class="mt-5 text-center text-xs text-slate-500">
+        <a routerLink="/forgot-password" class="font-semibold text-orange-400 transition-colors hover:text-orange-300">
+          No puedo acceder a mi cuenta
+        </a>
+      </p>
+    </section>
+  </main>
+</div>

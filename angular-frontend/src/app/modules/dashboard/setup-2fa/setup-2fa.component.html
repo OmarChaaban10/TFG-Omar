@@ -1,0 +1,78 @@
+<section class="th-card th-border rounded-xl border p-6">
+  <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <div>
+      <h3 class="text-lg font-bold th-text-heading">Autenticación en dos pasos</h3>
+      <p class="mt-1 text-sm th-text-muted">Protege el inicio de sesión con un código de Google Authenticator, Authy o similar.</p>
+    </div>
+
+    @if (enabled) {
+      <span class="w-max rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-bold text-emerald-400">
+        Activa
+      </span>
+    } @else {
+      <span class="w-max rounded-full bg-slate-500/15 px-3 py-1 text-xs font-bold text-slate-400">
+        Inactiva
+      </span>
+    }
+  </div>
+
+  @if (error) {
+    <div class="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+      {{ error }}
+    </div>
+  }
+
+  @if (message) {
+    <div class="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400">
+      {{ message }}
+    </div>
+  }
+
+  @if (!enabled && !qrCode) {
+    <button type="button" (click)="startSetup()" [disabled]="loading"
+      class="rounded-lg bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer">
+      {{ loading ? 'Preparando...' : 'Activar 2FA' }}
+    </button>
+  }
+
+  @if (!enabled && qrCode) {
+    <div class="grid gap-5 md:grid-cols-[220px_minmax(0,1fr)]">
+      <div class="rounded-xl bg-white p-4">
+        <img [src]="qrCode" alt="Código QR 2FA" class="h-auto w-full">
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <p class="text-sm th-text-muted">Escanea el QR con tu app autenticadora o introduce esta clave manualmente.</p>
+          <p class="mt-2 wrap-break-words rounded-lg border th-border px-3 py-2 font-mono text-sm th-text-heading">
+            {{ manualSecret }}
+          </p>
+        </div>
+
+        <div>
+          <label for="setup-2fa-code" class="mb-1.5 block text-xs font-bold uppercase th-text-muted">Código de confirmación</label>
+          <input id="setup-2fa-code" name="setup2faCode" type="text" inputmode="numeric" maxlength="6" [(ngModel)]="code"
+            class="th-input w-full rounded-lg border px-4 py-3 text-sm font-bold tracking-[0.25em] outline-none transition focus:border-orange-500 focus:ring-1 focus:ring-orange-500" />
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          <button type="button" (click)="enable()" [disabled]="saving"
+            class="rounded-lg bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer">
+            {{ saving ? 'Activando...' : 'Confirmar activación' }}
+          </button>
+          <button type="button" (click)="qrCode = ''; manualSecret = ''; code = ''"
+            class="rounded-lg px-4 py-2.5 text-sm font-medium text-slate-400 transition hover:bg-slate-800/50 hover:text-white cursor-pointer">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (enabled) {
+    <button type="button" (click)="disable()" [disabled]="saving"
+      class="rounded-lg border border-red-500/40 px-5 py-2.5 text-sm font-bold text-red-400 transition hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer">
+      {{ saving ? 'Desactivando...' : 'Desactivar 2FA' }}
+    </button>
+  }
+</section>

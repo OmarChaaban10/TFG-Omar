@@ -22,7 +22,7 @@ security:
                 check_path: /api/login
                 username_path: email
                 password_path: password
-                success_handler: lexik_jwt_authentication.handler.authentication_success
+                success_handler: App\Security\LoginSuccessHandler
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
             # activate different ways to authenticate
             # https://symfony.com/doc/current/security.html#the-firewall
@@ -35,6 +35,7 @@ security:
     access_control:
         - { path: ^/api/health, roles: PUBLIC_ACCESS, methods: [GET] }
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/2fa_check, roles: PUBLIC_ACCESS }
         - { path: ^/api/register, roles: PUBLIC_ACCESS }
         - { path: ^/api/check-email, roles: PUBLIC_ACCESS }
         - { path: ^/api/forgot-password, roles: PUBLIC_ACCESS }

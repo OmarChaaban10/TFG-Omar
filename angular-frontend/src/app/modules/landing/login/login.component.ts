@@ -1,12 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { RouterLink, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ThemeToggleComponent } from '../../shared/theme-toggle/theme-toggle.component';
-
-interface LoginResponse {
-  token: string;
-}
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -22,7 +18,7 @@ export class LoginComponent implements OnInit {
 
   constructor(
     private readonly fb: FormBuilder,
-    private readonly http: HttpClient,
+    private readonly authService: AuthService,
     private readonly router: Router,
   ) {
   }
@@ -50,13 +46,24 @@ export class LoginComponent implements OnInit {
     const { email, password, rememberMe } = this.loginForm.value;
 
     this.isSubmitting = true;
-    this.http
-      .post<LoginResponse>('/api/login', {
-        email: email.trim(),
-        password
-      })
+    this.authService
+      .login(email.trim(), password)
       .subscribe({
         next: (response) => {
+          if (response.require_2fa && response.challengeToken) {
+            sessionStorage.setItem('two_factor_challenge', response.challengeToken);
+            sessionStorage.setItem('two_factor_remember', rememberMe ? 'true' : 'false');
+            this.isSubmitting = false;
+            this.router.navigate(['/2fa-verify']);
+            return;
+          }
+
+          if (!response.token) {
+            this.errorMessage = 'No se pudo iniciar sesión.';
+            this.isSubmitting = false;
+            return;
+          }
+
           localStorage.removeItem('jwt_token');
           sessionStorage.removeItem('jwt_token');
           sessionStorage.removeItem('selected_board_project');
@@ -70,6 +77,14 @@ export class LoginComponent implements OnInit {
           this.router.navigate(['/dashboard']);
         },
         error: (error) => {
+          if (error?.status === 401 && error?.error?.require_2fa && error?.error?.challengeToken) {
+            sessionStorage.setItem('two_factor_challenge', error.error.challengeToken);
+            sessionStorage.setItem('two_factor_remember', rememberMe ? 'true' : 'false');
+            this.isSubmitting = false;
+            this.router.navigate(['/2fa-verify']);
+            return;
+          }
+
           let msg = error?.error?.message;
           if (msg === 'Invalid credentials.') {
             msg = 'Correo electrónico o contraseña incorrectos.';

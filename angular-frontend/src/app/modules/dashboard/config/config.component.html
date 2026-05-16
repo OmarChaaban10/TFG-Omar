@@ -116,6 +116,12 @@
   </section>
 </div>
 
+@if (user) {
+<div class="mt-6">
+  <app-setup-2fa [enabled]="user.twoFactorEnabled" (changed)="updateTwoFactorState($event)"></app-setup-2fa>
+</div>
+}
+
 <section class="mt-6 rounded-xl border border-red-500/30 bg-red-500/10 p-6">
   <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
     <div>
