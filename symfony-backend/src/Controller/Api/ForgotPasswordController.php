@@ -54,10 +54,11 @@ final class ForgotPasswordController
             ->setResetTokenExpiresAt(new \DateTimeImmutable('+1 hour'));
         $this->entityManager->flush();
 
-        $resetLink = rtrim($_ENV['FRONTEND_URL'] ?? 'http://localhost:4200', '/') . '/reset-password?token=' . urlencode($token);
+        $resetLink = rtrim($_ENV['FRONTEND_URL'] ?? 'https://omarchaaban.es', '/') . '/reset-password?token=' . urlencode($token);
+        $from = $_ENV['MAILER_FROM'] ?? 'no-reply@taskhive.local';
 
         $emailMsg = (new Email())
-            ->from('no-reply@taskhive.local')
+            ->from($from)
             ->to($user->getEmail())
             ->subject('Recuperación de contraseña en TaskHive')
             ->text("Hola {$user->getName()},\n\nPara recuperar tu contraseña haz click en el siguiente enlace:\n{$resetLink}\n\nSi no has sido tú, ignora este mensaje.")
