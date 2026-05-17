@@ -8,7 +8,6 @@ use App\Entity\Label;
 use App\Entity\Project;
 use App\Entity\ProjectMember;
 use App\Entity\Card;
-use App\Entity\Notification;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ObjectRepository;
@@ -40,7 +39,6 @@ final class ResetDemoDataCommand extends Command
         $projectRepository = $this->entityManager->getRepository(Project::class);
         $projectMemberRepository = $this->entityManager->getRepository(ProjectMember::class);
         $cardRepository = $this->entityManager->getRepository(Card::class);
-        $notificationRepository = $this->entityManager->getRepository(Notification::class);
         $labelRepository = $this->entityManager->getRepository(Label::class);
 
         $admin = $userRepository->findOneBy(['email' => $adminEmail]);
@@ -74,7 +72,6 @@ final class ResetDemoDataCommand extends Command
             $projectRepository->count(['owner' => $admin]) === 0
             && $projectMemberRepository->count(['user' => $admin]) === 0
             && $cardRepository->count(['assignee' => $admin]) === 0
-            && $notificationRepository->count(['user' => $admin]) === 0
         ) {
             $this->entityManager->remove($admin);
             $this->entityManager->flush();

@@ -42,10 +42,6 @@ class Card
     #[ORM\Column]
     private int $position = 0;
 
-    /** @var Collection<int, Notification> */
-    #[ORM\OneToMany(mappedBy: 'card', targetEntity: Notification::class, orphanRemoval: true)]
-    private Collection $notifications;
-
     /** @var Collection<int, CardComment> */
     #[ORM\OneToMany(mappedBy: 'card', targetEntity: CardComment::class, orphanRemoval: true)]
     private Collection $comments;
@@ -59,7 +55,6 @@ class Card
 
     public function __construct()
     {
-        $this->notifications = new ArrayCollection();
         $this->comments = new ArrayCollection();
         $this->labels = new ArrayCollection();
     }
@@ -149,31 +144,6 @@ class Card
     public function setPosition(int $position): self
     {
         $this->position = $position;
-
-        return $this;
-    }
-
-    /** @return Collection<int, Notification> */
-    public function getNotifications(): Collection
-    {
-        return $this->notifications;
-    }
-
-    public function addNotification(Notification $notification): self
-    {
-        if (!$this->notifications->contains($notification)) {
-            $this->notifications->add($notification);
-            $notification->setCard($this);
-        }
-
-        return $this;
-    }
-
-    public function removeNotification(Notification $notification): self
-    {
-        if ($this->notifications->removeElement($notification) && $notification->getCard() === $this) {
-            $notification->setCard(null);
-        }
 
         return $this;
     }
